@@ -1,0 +1,341 @@
+{
+  "curve": "secp256k1",
+  "leaked_bits": 5,
+  "nonce_bitlength": 256,
+  "public_key": {
+    "x": "0x48ac9d7d502d3e4d5f59721bee48c9ebb68b04c8571d2719df293a8ee16efefe",
+    "y": "0x1a41b42da1803b8bbdebdb1fb97746bea89ce4c256a0c2f32ea3e77da8ed1f2e"
+  },
+  "signatures": [
+    {
+      "message": "telemetry-record-0000",
+      "r": "0x6ec9ef3fabedff4df2ec0e93abe3f1cf1eb944d30bbf5ebafc150b395ea685d7",
+      "s": "0x26ac7bcc4a42d1e6ec22ff2ede36c9742697dae2e124a073c454535071b3da7f",
+      "leaked_msb": "0x12"
+    },
+    {
+      "message": "telemetry-record-0001",
+      "r": "0xa6ed1ec12bca985cf966331b9fad36c302fd8bfd8d3888c6c89bffd7e32d86bc",
+      "s": "0xd6be88a925800b70d4d56c6386869ed4e43577f1a79a70ba16c854bba8db4dca",
+      "leaked_msb": "0x7"
+    },
+    {
+      "message": "telemetry-record-0002",
+      "r": "0x63ba2c2306156fa94f1b4848b54b40de0ab615e90c8686a6011920a90a73e5c5",
+      "s": "0xcf35f6d2aa60216f5bbd03d791389180bf39335462863ad072b624e5ee37368",
+      "leaked_msb": "0x1"
+    },
+    {
+      "message": "telemetry-record-0003",
+      "r": "0xc259c1fbfd4bfd8e783da064fd6d22b7f498a697c1003299444fae4271b4369a",
+      "s": "0x7ab4fc1efa71499932b1f1ad0ff3f2a6265b30510e5b09dcb120fc29b5f66440",
+      "leaked_msb": "0x3"
+    },
+    {
+      "message": "telemetry-record-0004",
+      "r": "0x3ed9c687b09876f7a6a43e2c395e42af0ae2c560bfd5c503934e15d34e0dc984",
+      "s": "0xe21f0fe4c7bb75d65929ac2dfe57ed112254e624e4b7deb721b4a0e83a83066f",
+      "leaked_msb": "0x8"
+    },
+    {
+      "message": "telemetry-record-0005",
+      "r": "0xf9580408c0f1afd2c4bc2001f9d6a2d76e1738b217c679210e7fc5799191c1a",
+      "s": "0xae6b647bb02ec49644e30fc17c21696ba1f94709c0dd7bf325ea3f99112fd29",
+      "leaked_msb": "0xa"
+    },
+    {
+      "message": "telemetry-record-0006",
+      "r": "0x33cfe2690470f6d5b3e2b05525c8097a35c2ed9ba41e29af9e05955e0285f95f",
+      "s": "0x893e645d2f28315cfb16a456170fe444daf2e39f9b725b4f3b03aeb46fd17c84",
+      "leaked_msb": "0x1e"
+    },
+    {
+      "message": "telemetry-record-0007",
+      "r": "0x9abf6fa1dfa4cbfeb0d0bc11794eade2d9777f60570eb94bffd0c208fcda8157",
+      "s": "0x72d19e2e0a9789d45ff2ba1f0aba603c8c1b0e06a9a8e0eaf46b0f6b65d1a27c",
+      "leaked_msb": "0x8"
+    },
+    {
+      "message": "telemetry-record-0008",
+      "r": "0x6c6182fac4e7e123c340d3d0940893b62d177dbbcafdeb34d6f1f876a7163d49",
+      "s": "0x417c0c762b8fb3b2a6941b55d6d9b7b5087905f296b034841fba95806ae7ac26",
+      "leaked_msb": "0x12"
+    },
+    {
+      "message": "telemetry-record-0009",
+      "r": "0x715eec651548658ce343537f29003d2bd503b2048d78dd6340d5aa3c1f2b2e48",
+      "s": "0x165d09f49cfdbbefe70e54dc38beb2fcc79e786b261b1857efbbd0b720b9af78",
+      "leaked_msb": "0x1d"
+    },
+    {
+      "message": "telemetry-record-0010",
+      "r": "0x4a1a5a10c4cf24b72f08fe61a3f6a14a0069787b6a4d298e4f94da2e70ff3a2e",
+      "s": "0xfbb320a676f7bb2c6abea8390790bc8e1626156a3ee8fa8c8088a8c7c23b10eb",
+      "leaked_msb": "0x1d"
+    },
+    {
+      "message": "telemetry-record-0011",
+      "r": "0xf4df1ece431d0d7432c8064305fb981c6882a91f724138996c49e786f9eace7d",
+      "s": "0x5fb7df5d3b04f4ecbc9ccc6ef541bf7b8a8b2a1f4f412895e19d26b347eee596",
+      "leaked_msb": "0x7"
+    },
+    {
+      "message": "telemetry-record-0012",
+      "r": "0x3585284c460109caf8150096080f8d7575db7d7fe0f06196b25647606f0c6931",
+      "s": "0x6dd9af690d0ae2f55c5c7073f872286432939b3558bf0cf0cd68c1993643be72",
+      "leaked_msb": "0x17"
+    },
+    {
+      "message": "telemetry-record-0013",
+      "r": "0x501903292a0dfa8a9ebdd31862ae0004754603b37b906adc90621a951277430b",
+      "s": "0x837514526896ac1b6c394f5573083c49c2415cf3005692ff84ffebf444458ae6",
+      "leaked_msb": "0xe"
+    },
+    {
+      "message": "telemetry-record-0014",
+      "r": "0xf0b937ad8f6eea42778cb13475b68ffaf4d89afaacb723f4ba6b170b281f7dae",
+      "s": "0x158a6d8ef0763c9d485fa29d8da34b1c730020e31ec65ef85fee2cebee5853a6",
+      "leaked_msb": "0x9"
+    },
+    {
+      "message": "telemetry-record-0015",
+      "r": "0x7d806be12c92a13557675c600c4d964ee87e0e5f8545c81fd02ca510c207f469",
+      "s": "0x617f440f649f1760bf4e7c73e5a93672b19aad3dcf3dd4ef2fb1be1483a34f62",
+      "leaked_msb": "0x3"
+    },
+    {
+      "message": "telemetry-record-0016",
+      "r": "0x77fea8d836b50e5e295932d7e12c0f1b723257dd9ae8a7d0838c31d7539823b1",
+      "s": "0xb0e807b62b1f2d606386dc687664294cf68c6df24662aab64affc1d19114012d",
+      "leaked_msb": "0xd"
+    },
+    {
+      "message": "telemetry-record-0017",
+      "r": "0x4e57e7cba6d7af6176dde4fb763c766a1aa43074f6bbe774bd39cf95bceb4842",
+      "s": "0x90569978d1b71bdb9a301facd9a4a5fb7ca28cc51c8fa9833b6503db4fd8501a",
+      "leaked_msb": "0x7"
+    },
+    {
+      "message": "telemetry-record-0018",
+      "r": "0xafe5647ad042b319a1ea78d9a885254fe5201f33429667dffdb42544cb7496f4",
+      "s": "0x5b1d8dc0190c84bcbb8d67f7beff0e8daefa0cc167bb1b18bdd10448024be67d",
+      "leaked_msb": "0xb"
+    },
+    {
+      "message": "telemetry-record-0019",
+      "r": "0x1d1c69fab7e709a8f628981f368976ae4852d3820cf88c173a8d30d1c8de4f0e",
+      "s": "0xe1a16668f0818288442b92f83845492f740dee8ea869975e97e3107e87ad5fe0",
+      "leaked_msb": "0x7"
+    },
+    {
+      "message": "telemetry-record-0020",
+      "r": "0x539d865174e18f4169397df57eb5133524c12d49372a377e693546ad9157f22e",
+      "s": "0x7369741029d64e11f7011c852c947aab16e44b46d2a7acc08dfebe1e5880e068",
+      "leaked_msb": "0x18"
+    },
+    {
+      "message": "telemetry-record-0021",
+      "r": "0xfdcbc192794f68167855b11132f263073611673f620bf96c67464cdd7b5d9af4",
+      "s": "0x6652b544e871672f3630afc2c6fa66864d17b1c76be96711400098fc2e48e9d5",
+      "leaked_msb": "0x13"
+    },
+    {
+      "message": "telemetry-record-0022",
+      "r": "0x7df487ba27d4845b54e9cf8effb3e8b7e55ac6f2633af72fd2b32259d5cac3ea",
+      "s": "0xedcd04b6bf64cfef18196afa32da3cb9239f297e61f0c4e1cce1a6b8cf9edbab",
+      "leaked_msb": "0xc"
+    },
+    {
+      "message": "telemetry-record-0023",
+      "r": "0x45386bdf1f9e817729c27ed093d2c733c2f908826cf84c3282dac40cec5b96f7",
+      "s": "0x3d9dec5a3a719c1508b3699759e35482ff908a8ca80ea3a99d1b6d552d20cb0b",
+      "leaked_msb": "0x6"
+    },
+    {
+      "message": "telemetry-record-0024",
+      "r": "0xd331de3e2d248e99b1a66789583a3d30382658a45aeb3ef454f448a0d55cec12",
+      "s": "0xafa2cd98e9539f9fcdab428aba14ec393cff6aaf758c1243b177254cd6749b22",
+      "leaked_msb": "0xf"
+    },
+    {
+      "message": "telemetry-record-0025",
+      "r": "0xbeddaf8ca0b45cc295670379c77b92c76376ca884cb0e809d6881e8c605a617f",
+      "s": "0x56f14f4e623ae4bce7081f0e465131b8e7ac93bccf63e9d274d6b1642cbe32ea",
+      "leaked_msb": "0x7"
+    },
+    {
+      "message": "telemetry-record-0026",
+      "r": "0xa423158d285459ab14083fffa160d800c7b03b6e0f4ca5a0532b4943cd6953b",
+      "s": "0x4eb2eb987ce988a871a24dbdf8242d586183a26a1f874c27f1c207643776fb6b",
+      "leaked_msb": "0x5"
+    },
+    {
+      "message": "telemetry-record-0027",
+      "r": "0x20f451fa6d8d66e6c3ced86bf9360c5b81b221b2a10b1a582067e3e025523266",
+      "s": "0xd3f18f03d4ac7c060c060a41e1f2604bebd7406aa09257c5bfc0525a91af8b90",
+      "leaked_msb": "0xe"
+    },
+    {
+      "message": "telemetry-record-0028",
+      "r": "0x3df0e5910f27ca2f48aa163d0d8f3975e27615f702edade09fc6c63e6d43af58",
+      "s": "0xd84eae2efacf284106d89a0f9e1e6d28fd38ba5d123f6a8cababc2e92e0e7038",
+      "leaked_msb": "0x6"
+    },
+    {
+      "message": "telemetry-record-0029",
+      "r": "0xd9043d1dc8fd2110c6a2b32415ad80ef03d199ffbe56f9a7df05aa0fc0e97475",
+      "s": "0x56146bb9de496c9844d77198cb2d8ea36f3bd2185a2ee07c8f201d82d60acd34",
+      "leaked_msb": "0x0"
+    },
+    {
+      "message": "telemetry-record-0030",
+      "r": "0x3c1c5d19e84e6063b1e3f82ce3e250feded82d195a08c513e114c5f3d3f2a50c",
+      "s": "0x4f91335377449bf769cb522fde908043ecf7003ddfe4965a5accb4e4ef823c4c",
+      "leaked_msb": "0x9"
+    },
+    {
+      "message": "telemetry-record-0031",
+      "r": "0x7f321180b1d7493596fe4bad75ec2ec38317e70ff89c99fc7622e5251d6d0dd7",
+      "s": "0x779ea8a059123f7752035c122c4dae2e68414bd9d9b1532ebce22a3f9512d73f",
+      "leaked_msb": "0x1f"
+    },
+    {
+      "message": "telemetry-record-0032",
+      "r": "0x1eff9807fbec4955d4f89ae12e623a7983bda257f3b3e873c9a06746b0e39767",
+      "s": "0x45409c11074cc95e698893e6f3dd6628f7acdad61517f37b3638e18e40526899",
+      "leaked_msb": "0x1c"
+    },
+    {
+      "message": "telemetry-record-0033",
+      "r": "0xabc3adf03cd601655f259a556941bc446073e22a67c67636d1e5617bf2a864e2",
+      "s": "0xe7322d2655bd17fddeee862385dad8d6cbe15d7e75642cf753781c3c23ba09f5",
+      "leaked_msb": "0xf"
+    },
+    {
+      "message": "telemetry-record-0034",
+      "r": "0x426182d8a42e3bd725a90d859d694184c90fc036d720e8b2d6ebf5b331fd28b0",
+      "s": "0xd4e2f0e6b2401f3e5be044491ec1d099b91728c96007b8d71a3baa2616e83ac6",
+      "leaked_msb": "0x1b"
+    },
+    {
+      "message": "telemetry-record-0035",
+      "r": "0x6329a54d17ba09dcffbbefaa81fb6611770b2f1eb074107a43020349b4f2cbea",
+      "s": "0xb8970d9c300ae802575b15b0d7130786d3daab39c69fe22fd6eee49ff058d136",
+      "leaked_msb": "0xa"
+    },
+    {
+      "message": "telemetry-record-0036",
+      "r": "0x76a4358c7e24121b76498cfd8592fc9f7d4d5fd95275bb35c3bc62a51a9a33b2",
+      "s": "0x436d6c0e7f9f449dacfe888a64930b5a462e65afaa9a1d92d9e0473b10c7a075",
+      "leaked_msb": "0x8"
+    },
+    {
+      "message": "telemetry-record-0037",
+      "r": "0xfef234b61ee418d3609607bd3a28944bf4c5d3135e8f57f77857552fab766fce",
+      "s": "0xbffb1ba74c8adfe2f7c4d93359c227d8600a54563be0da82273752c7a38fba72",
+      "leaked_msb": "0x0"
+    },
+    {
+      "message": "telemetry-record-0038",
+      "r": "0xce0ffe5e5d9e89880be195713b42e60a71a9beaeb47337558894cdcf45c03858",
+      "s": "0x68b77630cd6e43d8fe3e9e950adfd47b324dc04b3755eaf750381c4857efa1fb",
+      "leaked_msb": "0x17"
+    },
+    {
+      "message": "telemetry-record-0039",
+      "r": "0xf3b02e4d1e81470e336a16a83c7d45bb01cf89996bac6ba6250abd33a4a8f97f",
+      "s": "0x75c18ea90fb7761fb8ada665119fbc809899af5f91640fb36c18beeab206684d",
+      "leaked_msb": "0x2"
+    },
+    {
+      "message": "telemetry-record-0040",
+      "r": "0x7ef506ded82897261707554a98a3142d894dd01c3862d4b53feba4f6290e7c55",
+      "s": "0x67e2d4b4ffbf2eaa1d46b834a6e8798f594d4bc4c410356b9f8949e75c8bae5a",
+      "leaked_msb": "0x18"
+    },
+    {
+      "message": "telemetry-record-0041",
+      "r": "0xb65fdd84bcbd1570548627002ae27956098989f3963ff9f97e33f311c3571f58",
+      "s": "0xf23d020fe7cec5ba692abeb8effe4b9c536d0ed97b4440f093ce9e28d6a68400",
+      "leaked_msb": "0x3"
+    },
+    {
+      "message": "telemetry-record-0042",
+      "r": "0x771823e73f266af0ec19cd5dfc4ca7a4afcc105ae31713fc189d509827547569",
+      "s": "0xe26833a2b619887a6b90e49eb8d29d149c18c27c4d4a2815763a733c77014ec8",
+      "leaked_msb": "0x1f"
+    },
+    {
+      "message": "telemetry-record-0043",
+      "r": "0x5227a273dcc12ecc4c72b3dd825d267e050cd6fecf5c81b8dc7f4ffec082d669",
+      "s": "0x160a3f535ed04b7348077cb56954458c60f77b5e1e2330b11400347d1117a418",
+      "leaked_msb": "0x12"
+    },
+    {
+      "message": "telemetry-record-0044",
+      "r": "0xd361f261af523c3793c1f83da271432c5a5e05c512ea2e58b5e1f14325f03bce",
+      "s": "0x469379f5766340ab523a0f24ed63032f15768953043717557b0fd7b2220db3af",
+      "leaked_msb": "0x3"
+    },
+    {
+      "message": "telemetry-record-0045",
+      "r": "0x1aa9af0795d750c223cf0e43a5c5e5146615baa2c50b7d432b460e910522e72b",
+      "s": "0x54742bc2a5c0cdc9864755f1c5538f2f904a094a32f05655be389447aa69a3cd",
+      "leaked_msb": "0x13"
+    },
+    {
+      "message": "telemetry-record-0046",
+      "r": "0x1706726fa3f05613d00ff47db02ffe11ac4573b14478df0da6597daccfb7b1b",
+      "s": "0xdf51da8c9275489ede1202a5b855a0c869e3836b3a41588bf46bd722bb312acb",
+      "leaked_msb": "0xf"
+    },
+    {
+      "message": "telemetry-record-0047",
+      "r": "0xff128789dcf0c6d9cdc3d380058b21a0a852a4ad5751cd2d2eca3fc435d37771",
+      "s": "0x3ff0de74bf9697c4d84989f96868a04e290035b53192e6328ff038a1d4c44634",
+      "leaked_msb": "0xa"
+    },
+    {
+      "message": "telemetry-record-0048",
+      "r": "0x91828905f67d5282bdaed18290ce030aa5dedf1f4b19dc1a95841aa20ea4e22e",
+      "s": "0x12544bfdedf16ecdf13923a190d6da3f4c1567e2ccc56bc7100065b4f201ca0a",
+      "leaked_msb": "0x1f"
+    },
+    {
+      "message": "telemetry-record-0049",
+      "r": "0x800adc141697d076bfc5bff627b52a477304152b76ea8077c411574c22ab6f87",
+      "s": "0xa839bbfa39410e4f9413c14693b54430269609b120eef6504a0350e4d2b7b2c6",
+      "leaked_msb": "0x1"
+    },
+    {
+      "message": "telemetry-record-0050",
+      "r": "0xa3e357dd8b64d143ec33d7648f4aa9cdbd68d5adb2b8f1a6624249aa9ac2c679",
+      "s": "0xe3511dc50a08332a554d9eb9be2a5c42119bbff34b619e7409799976b90744b5",
+      "leaked_msb": "0xc"
+    },
+    {
+      "message": "telemetry-record-0051",
+      "r": "0x3ac3b1dd61ef188686e2fe4fcb9700569d067eead0444949552f5039bfb9bbc5",
+      "s": "0x44260437d9a6bad402d6ba91f28430471a4ffe83676723cd23f9cb351d86afbe",
+      "leaked_msb": "0x1"
+    },
+    {
+      "message": "telemetry-record-0052",
+      "r": "0x356498f0f41c4a8795f8a6e0c539234f89b0dc936e307ca12fff93536ff68de9",
+      "s": "0xb9d49d442aad6188255e2e2cb54c3db32f53e1cb76ad5cc8966fee7dd6a4639",
+      "leaked_msb": "0x8"
+    },
+    {
+      "message": "telemetry-record-0053",
+      "r": "0x6e2c89f9a541c417f55963f77770e107ced0876cc29218bf073f1a3551a28245",
+      "s": "0xbe6804bf3fe3f06e9e13d176bf2115c0cf6784bb6f07016330add4855ab9ed0d",
+      "leaked_msb": "0xe"
+    },
+    {
+      "message": "telemetry-record-0054",
+      "r": "0x3233fe7f17115b3c1505810b47f7056f14dc6db18bd06763059e856c9b67cfd0",
+      "s": "0xaa7809070e4eb276150ea14e00118a4b978aab936a4589ca802889feadd69b4",
+      "leaked_msb": "0x17"
+    }
+  ]
+}
