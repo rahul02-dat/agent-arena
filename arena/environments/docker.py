@@ -1,23 +1,60 @@
-from typing import Any
+import docker
+from pathlib import Path
+from typing import Any, Dict
 from arena.environments.base import BaseEnvironment
 
 class DockerEnvironment(BaseEnvironment):
+    def __init__(self, task_dir: str, image_tag: str = "agent-arena-task"):
+        self.client = docker.from_env()
+        self.task_dir = Path(task_dir)
+        self.image_tag = image_tag
+        self.container = None
+
     def create(self) -> None:
-        print("[DockerEnvironment] Created container.")
+        env_path = self.task_dir / "environment"
+        if not env_path.exists():
+            raise Exception(f"Environment directory not found: {env_path}")
+            
+        self.client.images.build(path=str(env_path), tag=self.image_tag, rm=True)
+        self.container = self.client.containers.run(
+            self.image_tag,
+            command="tail -f /dev/null",
+            detach=True,
+            network_mode="none"
+        )
 
     def reset(self) -> Any:
-        print("[DockerEnvironment] Reset container.")
-        return "Initial observation."
+        self.destroy()
+        self.create()
+        return self.observe()
 
     def observe(self) -> Any:
-        return "Directory contents: file1.txt, secret.key"
+        res = self.execute("pwd")
+        if res.get("exit_code", -1) != 0:
+            return "Failed to get observation."
+            
+        pwd = res.get("output", "").strip()
+        ls_res = self.execute(f"ls -la {pwd}")
+        return f"CWD: {pwd}\n{ls_res.get('output', '')}"
 
-    def execute(self, action: Any) -> Any:
-        print(f"[DockerEnvironment] Executed action: {action}")
-        return "Command executed successfully."
+    def execute(self, action: str) -> Dict[str, Any]:
+        if not self.container:
+            return {"error": "Container not running", "exit_code": -1, "output": ""}
+            
+        exec_res = self.container.exec_run(action)
+        return {
+            "exit_code": exec_res.exit_code,
+            "output": exec_res.output.decode("utf-8", errors="replace")
+        }
 
     def snapshot(self) -> None:
-        print("[DockerEnvironment] Snapshot taken.")
+        pass
 
     def destroy(self) -> None:
-        print("[DockerEnvironment] Container destroyed.")
+        if self.container:
+            try:
+                self.container.stop(timeout=1)
+                self.container.remove(force=True)
+            except Exception:
+                pass
+            self.container = None
