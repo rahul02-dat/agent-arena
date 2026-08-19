@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-arena"
+version = "0.1.0"
+description = "Research platform for studying autonomous AI agents operating inside realistic terminal environments"
+authors = [
+    {name = "Rahul", email = "rahul@example.com"}
+]
+dependencies = [
+    "ollama",
+    "pydantic",
+    "typer",
+    "docker",
+    "gymnasium",
+    "pettingzoo",
+    "pytest"
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+arena = "arena.cli.main:app"
