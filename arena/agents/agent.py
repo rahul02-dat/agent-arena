@@ -3,15 +3,15 @@ from arena.agents.base import BaseAgent
 
 class LLMAgent(BaseAgent):
     def observe(self, observation: Any) -> None:
-        self.memory.write(f"Observation: {observation}")
+        self.memory.write(f"{observation}")
 
     def act(self) -> Dict[str, Any]:
         context = self.memory.read()
         
         system_prompt = (
             f"You are {self.identity} with role {self.role.name}. "
-            "Examine the context and choose a tool to take action. "
-            "You must use a tool."
+            "Examine the context history carefully. Do not repeat the same action if it failed or returned the same result. "
+            "You must use a tool to make progress."
         )
         
         messages = [
@@ -20,7 +20,7 @@ class LLMAgent(BaseAgent):
         ]
         
         formatted_tools = []
-        for tool in self.tools:
+        for tool in self.tools.values():
             formatted_tools.append({
                 "type": "function",
                 "function": {

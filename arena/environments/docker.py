@@ -1,4 +1,7 @@
 import docker
+import tarfile
+import io
+import os
 from pathlib import Path
 from typing import Any, Dict
 from arena.environments.base import BaseEnvironment
@@ -46,6 +49,21 @@ class DockerEnvironment(BaseEnvironment):
             "exit_code": exec_res.exit_code,
             "output": exec_res.output.decode("utf-8", errors="replace")
         }
+        
+    def copy_to_container(self, src_path: str, dest_path: str) -> bool:
+        if not self.container:
+            return False
+            
+        src = Path(src_path)
+        if not src.exists():
+            return False
+            
+        tar_stream = io.BytesIO()
+        with tarfile.open(fileobj=tar_stream, mode="w") as tar:
+            tar.add(src, arcname=os.path.basename(src))
+            
+        tar_stream.seek(0)
+        return self.container.put_archive(path=dest_path, data=tar_stream)
 
     def snapshot(self) -> None:
         pass

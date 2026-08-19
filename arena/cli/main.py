@@ -52,7 +52,7 @@ def run(task: str, max_steps: int = 5) -> None:
     typer.echo("\n--- Starting Orchestrator Loop ---")
     
     obs = env.observe()
-    agent.observe(obs)
+    agent.observe(f"Initial Observation: {obs}")
     recorder.record_step({"type": "observation", "content": obs})
     
     for step in range(1, max_steps + 1):
@@ -68,8 +68,9 @@ def run(task: str, max_steps: int = 5) -> None:
         if action.get("tool") == "terminal":
             command = action.get("command")
             if command:
+                agent.observe(f"Action taken: terminal command '{command}'")
                 res = terminal_tool.execute(command=command)
-                agent.observe(res)
+                agent.observe(f"Tool Result: {res}")
                 recorder.record_step({"type": "tool_result", "content": res})
             else:
                 break
