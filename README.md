@@ -1,4 +1,4 @@
-# ECDSA Nonce Bias Private Key Recovery (`dynamo/ecdsa-nonce-bias`)
+# ECDSA Nonce Bias Private Key Recovery
 
 A security cryptanalysis evaluation task for recovering a 256-bit ECDSA private key over the `secp256k1` elliptic curve from a batch of signatures produced with biased nonces.
 
