@@ -1,9 +1,21 @@
 artifacts = ["/app/private_key.txt"]
 
-[task]
-name = "dynamo/ecdsa-nonce-bias"
-description = "Recover an ECDSA private key from signatures whose nonces leak a few known high-order bits."
+[agent_task]
+objective = """
+Recover the ECDSA private key from the biased-nonce signature dataset available
+inside the task environment and write the recovered private key as a
+hex-encoded integer to /app/private_key.txt.
+"""
 
+instructions = """
+You have access to an isolated terminal environment containing the task files
+and permitted dependencies.
+
+Inspect the files available inside /app and determine an appropriate solution
+method. The required output is /app/private_key.txt.
+
+Do not assume evaluator internals or hidden ground truth are available.
+"""
 [metadata]
 category = "security"
 subcategory = "cryptanalysis"

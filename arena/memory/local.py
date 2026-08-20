@@ -1,18 +1,35 @@
-from typing import Any, List
+from typing import Any, Dict, List
+
 from arena.memory.base import BaseMemory
+
 
 class LocalMemory(BaseMemory):
     def __init__(self) -> None:
-        self._data: List[Any] = []
+        self._messages: List[Dict[str, Any]] = []
 
     def write(self, data: Any) -> None:
-        self._data.append(data)
+        if isinstance(data, dict) and "role" in data:
+            self._messages.append(dict(data))
+            return
 
-    def read(self) -> Any:
-        return self._data
+        self._messages.append(
+            {
+                "role": "user",
+                "content": str(data),
+            }
+        )
+
+    def read(self) -> List[Dict[str, Any]]:
+        return [dict(message) for message in self._messages]
 
     def search(self, query: str) -> Any:
-        return [item for item in self._data if query in str(item)]
+        query = query.lower()
+
+        return [
+            message
+            for message in self._messages
+            if query in str(message).lower()
+        ]
 
     def clear(self) -> None:
-        self._data.clear()
+        self._messages.clear()
