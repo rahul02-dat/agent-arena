@@ -47,7 +47,7 @@ def build_agent_task_context(
 def run(
     task: str,
     max_steps: int = typer.Option(
-        20,
+        100,
         min=1,
         help="Maximum number of agent steps.",
     ),
@@ -106,7 +106,7 @@ def run(
 
         agent = LLMAgent(
             identity="Agent-1",
-            role=AgentRole.EXPLORER,
+            role=AgentRole.EXECUTOR,
             model=model,
             memory=memory,
             tools=[terminal_tool],
