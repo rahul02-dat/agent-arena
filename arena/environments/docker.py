@@ -19,7 +19,7 @@ class DockerEnvironment(BaseEnvironment):
         self.image_tag = image_tag
         self.container = None
 
-    def create(self) -> None:
+    def create(self, force_rebuild: bool = False) -> None:
         env_path = self.task_dir / "environment"
 
         if not env_path.exists():
@@ -27,11 +27,20 @@ class DockerEnvironment(BaseEnvironment):
                 f"Environment directory not found: {env_path}"
             )
 
-        self.client.images.build(
-            path=str(env_path),
-            tag=self.image_tag,
-            rm=True,
-        )
+        build_needed = force_rebuild
+        if not build_needed:
+            try:
+                self.client.images.get(self.image_tag)
+            except docker.errors.ImageNotFound:
+                build_needed = True
+
+        if build_needed:
+            self.client.images.build(
+                path=str(env_path),
+                tag=self.image_tag,
+                rm=True,
+                forcerm=True,
+            )
 
         self.container = self.client.containers.run(
             self.image_tag,

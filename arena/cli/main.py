@@ -56,6 +56,11 @@ def run(
         min=1,
         help="Maximum consecutive invalid model actions.",
     ),
+    force_build: bool = typer.Option(
+        False,
+        "--force-build",
+        help="Force rebuild the Docker environment image.",
+    ),
 ) -> None:
     typer.echo(f"Starting task: {task}")
 
@@ -92,7 +97,7 @@ def run(
     evaluation_ran = False
 
     try:
-        env.create()
+        env.create(force_rebuild=force_build)
 
         model = OllamaProvider(
             model_name="llama3.2",
