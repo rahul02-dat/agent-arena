@@ -1,4 +1,5 @@
-import tomllib
+import json
+import yaml
 from pathlib import Path
 from typing import Any, Dict
 
@@ -45,9 +46,13 @@ def build_agent_task_context(
 
 @app.command()
 def run(
-    task: str,
+    task: str = typer.Option(
+        ...,
+        "--task",
+        help="The name of the task to run.",
+    ),
     max_steps: int = typer.Option(
-        100,
+        None,
         min=1,
         help="Maximum number of agent steps.",
     ),
@@ -72,35 +77,42 @@ def run(
         )
         raise typer.Exit(code=1)
 
-    with task_path.open("rb") as file:
-        config = tomllib.load(file)
+    with task_path.open("r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
 
-    task_name = config.get(
-        "task",
-        {},
-    ).get(
-        "name",
-        task,
-    )
+    task_name = config.get("name", task)
 
     objective, task_instructions = build_agent_task_context(config)
+
+    limits = config.get("limits", {})
+    if max_steps is None:
+        max_steps = limits.get("max_steps", 100)
+
+    env_config = config.get("environment", {})
 
     typer.echo(f"Loaded task: {task_name}")
     typer.echo(f"Objective: {objective}")
 
     env = DockerEnvironment(
         task_dir=str(task_path.parent),
+        cpus=limits.get("cpus"),
+        memory_mb=limits.get("memory_mb"),
+        network=env_config.get("network"),
     )
 
     recorder = TrajectoryRecorder()
     submitted = False
     evaluation_ran = False
+    failure_category = None
+    failure_reason = None
 
     try:
         env.create(force_rebuild=force_build)
 
+        model_config = config.get("model", {})
         model = OllamaProvider(
-            model_name="llama3.2",
+            model_name=model_config.get("name", "llama3.2"),
+            temperature=model_config.get("temperature", 0.0),
         )
 
         memory = LocalMemory()
@@ -254,12 +266,33 @@ def run(
             )
 
             if tool_name == "submit":
-                submitted = True
-
                 reason = arguments.get(
                     "reason",
                     "",
                 )
+
+                # Validate artifact before submission
+                val_res = env.execute("cat /app/private_key.txt")
+                if val_res.get("exit_code") != 0:
+                    agent.observe({"role": "user", "content": "Submission rejected: required artifact /app/private_key.txt is missing. Continue working."})
+                    continue
+
+                content = val_res.get("output", "").strip()
+                if not content:
+                    agent.observe({"role": "user", "content": "Submission rejected: required artifact /app/private_key.txt is empty. Continue working."})
+                    continue
+
+                try:
+                    d = int(content, 16)
+                    N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+                    if not (0 < d < N):
+                        agent.observe({"role": "user", "content": "Submission rejected: required artifact /app/private_key.txt is not in valid range. Continue working."})
+                        continue
+                except ValueError:
+                    agent.observe({"role": "user", "content": "Submission rejected: required artifact /app/private_key.txt is not a valid hex integer. Continue working."})
+                    continue
+
+                submitted = True
 
                 typer.echo(
                     f"Agent submitted task: {reason}"
@@ -301,23 +334,30 @@ def run(
                 }
             )
 
+            tool_call_id = action.get("tool_call_id", f"call_{step}")
+
             agent.observe(
                 {
                     "role": "assistant",
-                    "content": (
-                        f"Called tool {tool_name} "
-                        f"with arguments {arguments}."
-                    ),
+                    "tool_calls": [
+                        {
+                            "id": tool_call_id,
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "arguments": arguments,
+                            },
+                        }
+                    ],
                 }
             )
 
             agent.observe(
                 {
-                    "role": "user",
-                    "content": (
-                        f"Tool result from {tool_name}:\n"
-                        f"{result}"
-                    ),
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
+                    "name": tool_name,
+                    "content": json.dumps(result),
                 }
             )
 
@@ -340,6 +380,20 @@ def run(
                 "content": evaluation,
             }
         )
+
+        if not submitted:
+            failure_category = "AGENT_TASK_FAILURE"
+            failure_reason = "Required artifact /app/private_key.txt was not produced (or max steps reached without valid submission)."
+        elif not evaluation.get("success"):
+            failure_category = "AGENT_TASK_FAILURE"
+            failure_reason = "Evaluator determined task was not solved successfully."
+
+        if failure_category:
+            typer.echo(f"\nStatus: FAILURE")
+            typer.echo(f"Failure category: {failure_category}")
+            typer.echo(f"Reason: {failure_reason}")
+        else:
+            typer.echo(f"\nStatus: SUCCESS")
 
     except Exception as exc:
         typer.echo(

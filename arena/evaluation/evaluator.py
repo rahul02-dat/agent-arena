@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 from arena.environments.base import BaseEnvironment
 
@@ -16,19 +17,38 @@ class Evaluator:
         else:
             res = self.environment.execute("bash tests/test.sh")
 
-        # The test.sh returns 0 regardless of test success, we need to read /logs/verifier/reward.txt
-        reward_res = self.environment.execute("cat /logs/verifier/reward.txt")
+        ctrf_res = self.environment.execute("cat /logs/verifier/ctrf.json")
+        success = False
         score = 0.0
-        if reward_res.get("exit_code") == 0:
+        metrics = {}
+        failure_reason = None
+        
+        if ctrf_res.get("exit_code") == 0:
             try:
-                score = float(reward_res.get("output", "0").strip())
-            except ValueError:
-                pass
-        
-        success = score > 0.0
-        
+                ctrf_data = json.loads(ctrf_res.get("stdout", "{}"))
+                summary = ctrf_data.get("results", {}).get("summary", {})
+                passed = summary.get("passed", 0)
+                failed = summary.get("failed", 0)
+                total = passed + failed
+                
+                if total > 0:
+                    score = float(passed) / total
+                    success = (failed == 0)
+                
+                metrics = summary
+                
+                if failed > 0:
+                    failure_reason = "Some evaluation tests failed."
+                
+            except json.JSONDecodeError:
+                failure_reason = "Failed to parse CTRF evaluation output."
+        else:
+            failure_reason = "Evaluation CTRF report not found or could not be read."
+
         return {
             "success": success,
             "score": score,
+            "metrics": metrics,
+            "failure_reason": failure_reason,
             "details": res.get("output", "")
         }

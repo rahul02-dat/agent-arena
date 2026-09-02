@@ -1,79 +1,32 @@
 # AGENTS.md
 
-# Agent Arena
+# Agent Arena — Runtime and ECDSA MVP Repair Specification
 
-## Project-Level Engineering and Research Specification
+## 0. Mission
 
-**Project status:** Early research / greenfield implementation  
-**Primary language:** Python  
-**Primary model runtime:** Ollama  
-**Primary development environment:** Apple Silicon, local-first  
-**Budget constraint:** Zero paid infrastructure  
-**Primary objective:** Research-grade platform for autonomous terminal agents, multi-agent collaboration, and reinforcement-learning-based orchestration.
+You are modifying the existing `rahul02-dat/cryptography` repository.
 
----
+Your objective is to make the current Agent Arena implementation function correctly **end-to-end** for the ECDSA biased-nonce benchmark while preserving the research architecture defined by this project.
 
-# 1. Purpose of This File
+The current implementation reaches evaluation but produces an empty:
 
-This file is the authoritative engineering specification for the Agent Arena repository.
+```text
+/app/private_key.txt
+```
 
-Any human or AI agent modifying this repository MUST follow the rules defined here.
+The evaluator therefore fails all three tests before cryptographic correctness can even be evaluated.
 
-The purpose of this file is to prevent:
+This is primarily an **agent/runtime execution failure**, not yet a cryptographic correctness failure.
 
-- architectural drift;
-- unnecessary dependencies;
-- premature abstraction;
-- cloud-service dependencies;
-- benchmark leakage;
-- evaluator contamination;
-- reward hacking;
-- accidental coupling between agents and environments;
-- uncontrolled changes to experimental conditions;
-- mixing research infrastructure with task-specific implementations.
+Do not weaken the evaluator to make the benchmark pass.
 
-When another document conflicts with this file, this file takes precedence unless a newer explicit project-level decision supersedes it.
+Fix the runtime, agent loop, task integration, artifact handling, and infrastructure first.
 
 ---
 
-# 2. Project Definition
+# 1. Authoritative Project Principles
 
-Agent Arena is a research platform for studying autonomous AI agents operating inside realistic terminal environments.
-
-The core research question is:
-
-> Can reinforcement learning learn effective orchestration policies for teams of autonomous language-model agents operating in complex, partially observable terminal environments?
-
-The platform must support:
-
-1. Single-agent terminal environments.
-2. Multi-agent terminal environments.
-3. Role-specialized agents.
-4. Agent-to-agent communication.
-5. Shared and private memory.
-6. Environment isolation.
-7. Deterministic evaluation.
-8. Trajectory recording.
-9. Fine-grained reward computation.
-10. Learned orchestration.
-11. Reinforcement-learning experiments.
-12. Reproducible research experiments.
-
-The project is NOT initially:
-
-- a commercial SaaS product;
-- a cloud agent platform;
-- a generic chatbot framework;
-- a LangChain replacement;
-- a model-training platform;
-- a benchmark consisting only of static questions;
-- a collection of coding puzzles.
-
----
-
-# 3. Core Research Philosophy
-
-The project must treat the following as separate concepts:
+The following concepts MUST remain separate:
 
 ```text
 Model
@@ -91,9 +44,9 @@ Trajectory
 Experiment
 ```
 
-Never collapse these concepts into one abstraction.
+Do not collapse them into one abstraction.
 
-The architecture must allow:
+The architecture must permit:
 
 ```text
 Model A + Agent Role X
@@ -102,9 +55,9 @@ Model B + Agent Role X
 Model B + Agent Role Y
 ```
 
-without changing the environment or evaluator.
+without changing the task environment or evaluator.
 
-The architecture must also allow:
+The architecture must eventually support:
 
 ```text
 Single agent
@@ -116,1064 +69,488 @@ RL orchestration
 
 without rewriting task environments.
 
----
+The evaluator is the source of truth.
 
-# 4. Non-Negotiable Constraints
+The trajectory is a primary research artifact.
 
-## 4.1 Zero Paid Infrastructure
+Docker is the isolation boundary.
 
-The project must be usable without:
+Ollama is the initial inference backend, but agent code must not depend directly on the Ollama API.
 
-- paid API keys;
-- paid cloud GPUs;
-- paid databases;
-- paid observability;
-- paid experiment tracking;
-- paid hosted vector databases;
-- paid inference APIs.
-
-Local Ollama is the default model runtime.
-
-The project must not require internet access during an experiment unless a task explicitly declares network access as part of the environment.
+These principles are part of the original project specification.
 
 ---
 
-## 4.2 Local-First
+# 2. Current Priority
 
-The primary development target is a local Apple Silicon machine with approximately 24 GB unified memory.
+Do NOT implement the entire future Agent Arena roadmap.
 
-The architecture must not assume:
-
-- CUDA;
-- NVIDIA GPUs;
-- distributed clusters;
-- cloud execution;
-- Kubernetes.
-
-CUDA-specific functionality may be added later, but it must never be a hard dependency of the core platform.
-
----
-
-## 4.3 Reproducibility
-
-Every experiment must be reproducible as far as technically possible.
-
-An experiment must record:
-
-- task ID;
-- task version;
-- environment version;
-- model name;
-- model configuration;
-- agent configuration;
-- orchestration configuration;
-- random seed;
-- resource limits;
-- evaluator version;
-- reward configuration;
-- software version;
-- timestamp.
-
-Do not change experimental parameters silently.
-
----
-
-## 4.4 Evaluator Isolation
-
-The agent MUST NOT have access to:
-
-- ground truth;
-- hidden evaluator state;
-- evaluator implementation when it exposes protected information;
-- private test fixtures;
-- reference solutions;
-- scoring internals that could be exploited.
-
-The evaluator must operate outside the agent-controlled environment whenever practical.
-
----
-
-## 4.5 No Reward Leakage
-
-Reward information must not expose the solution.
-
-The agent may receive legitimate progress feedback.
-
-It must not receive:
+The immediate priority is:
 
 ```text
-"The private key is X"
-"The correct file is Y"
-"The expected command is Z"
+Task
+ ↓
+Configuration
+ ↓
+Docker environment
+ ↓
+Agent receives objective
+ ↓
+Agent observes environment
+ ↓
+Agent calls terminal tool
+ ↓
+Terminal executes inside Docker
+ ↓
+Structured tool result returns to agent
+ ↓
+Agent continues reasoning
+ ↓
+Agent creates required artifact
+ ↓
+Runtime validates artifact
+ ↓
+Evaluator validates final state
+ ↓
+Reward/score
+ ↓
+Trajectory saved
+ ↓
+Container destroyed
 ```
 
-unless that information is legitimately observable in the task.
+This is the required single-agent vertical slice.
+
+Do not move to RL, learned orchestration, distributed execution, or other future infrastructure until this path is reliable.
 
 ---
 
-# 5. High-Level Architecture
+# 3. Required Success Condition
+
+The command equivalent to:
+
+```bash
+arena run --task ecdsa_nonce_bias_001
+```
+
+must produce a complete reproducible episode.
+
+A successful run must:
+
+1. Create the Docker environment.
+2. Load the task configuration.
+3. Configure the model from configuration.
+4. Give the agent the legitimate task objective.
+5. Give the agent access to the terminal tool.
+6. Execute terminal commands inside Docker.
+7. Return structured tool results to the agent.
+8. Allow the agent to continue for sufficient steps.
+9. Require the agent to create:
+   `/app/private_key.txt`
+10. Validate the artifact before submission.
+11. Run the protected evaluator.
+12. Return structured evaluation.
+13. Record the complete trajectory.
+14. Destroy the container.
+
+Expected CLI output:
 
 ```text
-                         ┌─────────────────────┐
-                         │        Task         │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │     Environment     │
-                         │       Docker        │
-                         └──────────┬──────────┘
-                                    │
-                               observations
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    Agent Runtime    │
-                         └──────────┬──────────┘
-                                    │
-                      ┌─────────────┼─────────────┐
-                      │             │             │
-                      ▼             ▼             ▼
-                   Explorer      Researcher    Executor
-                      │             │             │
-                      └─────────────┼─────────────┘
-                                    │
-                              communication
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    Orchestrator     │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                              Environment
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │     Evaluator       │
-                         └──────────┬──────────┘
-                                    │
-                              reward / metrics
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │     Trajectory      │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │   Research / RL     │
-                         └─────────────────────┘
+Task: ecdsa_nonce_bias_001
+Agent: executor
+Model: <configured model>
+
+Status: SUCCESS / FAILURE
+
+Reward: <value>
+Steps: <value>
+Tool calls: <value>
+Duration: <value>
+
+Trajectory:
+results/<episode>.jsonl
 ```
 
 ---
 
-# 6. Required Repository Structure
+# 4. Critical Bug #1 — Remove Hard-Coded Model Selection
 
-The repository MUST begin with this structure:
+## Current problem
 
-```text
-agent-arena/
-│
-├── AGENTS.md
-├── README.md
-├── LICENSE
-├── pyproject.toml
-├── .gitignore
-│
-├── arena/
-│   ├── __init__.py
-│   │
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── types.py
-│   │   ├── errors.py
-│   │   ├── config.py
-│   │   └── protocols.py
-│   │
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── agent.py
-│   │   └── roles.py
-│   │
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   └── ollama.py
-│   │
-│   ├── tools/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── registry.py
-│   │   └── terminal.py
-│   │
-│   ├── environments/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   └── docker.py
-│   │
-│   ├── memory/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   └── local.py
-│   │
-│   ├── communication/
-│   │   ├── __init__.py
-│   │   ├── messages.py
-│   │   └── bus.py
-│   │
-│   ├── orchestration/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   └── sequential.py
-│   │
-│   ├── evaluation/
-│   │   ├── __init__.py
-│   │   ├── evaluator.py
-│   │   ├── rewards.py
-│   │   └── metrics.py
-│   │
-│   ├── trajectories/
-│   │   ├── __init__.py
-│   │   ├── recorder.py
-│   │   └── schema.py
-│   │
-│   └── cli/
-│       ├── __init__.py
-│       └── main.py
-│
-├── tasks/
-│   └── ecdsa_nonce_bias/
-│       ├── task.yaml
-│       ├── README.md
-│       ├── environment/
-│       │   ├── Dockerfile
-│       │   ├── setup.sh
-│       │   └── app/
-│       ├── evaluator/
-│       │   ├── evaluator.py
-│       │   └── tests/
-│       └── reference/
-│
-├── experiments/
-│   └── README.md
-│
-├── results/
-│   └── .gitkeep
-│
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── fixtures/
-│
-├── scripts/
-│   └── README.md
-│
-└── docs/
-    ├── architecture.md
-    ├── agents.md
-    ├── environments.md
-    ├── evaluation.md
-    ├── trajectories.md
-    ├── multi_agent.md
-    └── reinforcement_learning.md
+The current CLI hard-codes:
+
+```python
+model_name="llama3.2"
 ```
 
----
+This is unacceptable for the research architecture.
 
-# 7. File-by-File Specification
+The model must be configurable.
 
-# 7.1 `AGENTS.md`
+## Required implementation
 
-## Purpose
+The task/experiment configuration must specify:
 
-Authoritative engineering instructions.
-
-## MAY contain
-
-- architecture;
-- project rules;
-- file ownership;
-- implementation constraints;
-- research principles;
-- testing requirements;
-- security rules.
-
-## MUST NOT contain
-
-- runtime logic;
-- secrets;
-- API keys;
-- experiment results;
-- generated trajectories;
-- task ground truth.
-
----
-
-# 7.2 `README.md`
-
-## Purpose
-
-Public project introduction.
-
-## MUST contain
-
-- project description;
-- research question;
-- architecture overview;
-- installation instructions;
-- quickstart;
-- development status;
-- basic usage;
-- links to detailed documentation.
-
-## MAY contain
-
-- diagrams;
-- benchmark results after publication;
-- screenshots;
-- examples.
-
-## MUST NOT contain
-
-- hidden evaluator details;
-- task ground truth;
-- credentials;
-- private research notes;
-- temporary debugging instructions.
-
-The README is public-facing.
-
----
-
-# 7.3 `LICENSE`
-
-Contains the project license.
-
-The license must be chosen explicitly.
-
-Do not copy a license from another project without verifying its compatibility.
-
----
-
-# 7.4 `pyproject.toml`
-
-## Purpose
-
-Single source of truth for Python package metadata and dependencies.
-
-## MUST contain
-
-- package metadata;
-- supported Python version;
-- dependencies;
-- development dependencies;
-- CLI entry point;
-- tool configuration where appropriate.
-
-## Initial dependency philosophy
-
-Keep dependencies minimal.
-
-Initial expected dependencies include:
-
-```text
-ollama
-pydantic
-typer
-docker
-gymnasium
-pettingzoo
-pytest
+```yaml
+model:
+  name: <model-name>
+  temperature: 0.0
 ```
 
-Additional dependencies must have a documented reason.
+The runtime must read the configured value.
 
-Do NOT add:
+Do NOT write:
 
-- LangChain;
-- LangGraph;
-- cloud SDKs;
-- database servers;
-- distributed frameworks;
-
-unless the project explicitly reaches the stage requiring them.
-
----
-
-# 7.5 `.gitignore`
-
-Must ignore:
-
-```text
-.venv/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.DS_Store
-.env
-*.log
-
-results/*
-!results/.gitkeep
-
-models/
-checkpoints/
-artifacts/
+```python
+OllamaProvider(model_name="llama3.2")
 ```
 
-Do not ignore source code, task specifications, evaluator code, or reproducibility metadata.
+inside the execution path.
 
----
+Instead:
 
-# 8. `arena/core/`
+```python
+model_config = config["model"]
 
-This package contains foundational data structures and contracts.
-
-It must remain dependency-light.
-
----
-
-# 8.1 `arena/core/types.py`
-
-## Purpose
-
-Shared typed data structures.
-
-May contain:
-
-- enums;
-- identifiers;
-- immutable value objects;
-- primitive domain types.
-
-Examples:
-
-```text
-AgentId
-TaskId
-EpisodeId
-ActionType
-AgentRole
-EpisodeStatus
+provider = OllamaProvider(
+    model_name=model_config["name"],
+    temperature=model_config.get("temperature", 0.0),
+)
 ```
 
-Must NOT contain:
-
-- Ollama calls;
-- Docker calls;
-- reward logic;
-- model-specific code;
-- terminal execution.
-
----
-
-# 8.2 `arena/core/errors.py`
-
-Contains project-specific exceptions.
-
-Examples:
+The exact API may differ according to the existing implementation, but the dependency direction must remain:
 
 ```text
-ArenaError
-EnvironmentError
-AgentError
-ToolError
-EvaluationError
-ConfigurationError
-TrajectoryError
-```
-
-Must NOT contain operational logic.
-
----
-
-# 8.3 `arena/core/config.py`
-
-Contains validated configuration models.
-
-Use Pydantic.
-
-Examples:
-
-```text
-ArenaConfig
-AgentConfig
-ModelConfig
-EnvironmentConfig
-EvaluationConfig
-ExperimentConfig
-```
-
-Configuration should be data, not behavior.
-
----
-
-# 8.4 `arena/core/protocols.py`
-
-Contains Python `Protocol` definitions for major interfaces.
-
-Expected interfaces:
-
-```text
-LLMProvider
-Agent
-Environment
-Tool
-Memory
-Evaluator
-Orchestrator
-TrajectoryRecorder
-```
-
-The purpose is dependency inversion.
-
-Implementations must depend on interfaces rather than the reverse.
-
----
-
-# 9. `arena/models/`
-
-This package contains model-runtime integrations.
-
----
-
-# 9.1 `arena/models/base.py`
-
-Defines the model abstraction.
-
-Conceptually:
-
-```text
+configuration
+    ↓
 LLMProvider
     ↓
-chat()
-generate()
+Ollama implementation
 ```
 
-The interface must not assume Ollama.
+The agent must not directly instantiate Ollama internals.
 
-It should represent generic model interaction.
+The original specification explicitly requires a generic `LLMProvider` abstraction so that Ollama can later be replaced by other backends.
 
 ---
 
-# 9.2 `arena/models/ollama.py`
+# 5. Critical Bug #2 — Fix Structured Tool-Calling
 
-Contains the Ollama implementation.
+## Current problem
 
-Ollama exposes a local API at:
+The current runtime converts tool calls into ordinary text such as:
 
 ```text
-http://localhost:11434/api
+assistant:
+Called tool terminal with arguments ...
+
+user:
+Tool result from terminal:
+...
 ```
 
-when running locally. Its chat API supports tool calls, and its Python library can pass functions as tools.
+This is not a proper structured multi-turn tool-calling conversation.
 
-This file MAY contain:
+The agent must retain the original assistant tool-call message and receive a structured tool result.
 
-- Ollama client initialization;
-- model requests;
-- tool-call parsing;
-- response normalization;
-- usage metadata.
+The project specification explicitly expects structured tool calling and multi-turn agent loops.
 
-This file MUST NOT contain:
+## Required conversation model
 
-- agent roles;
-- task logic;
-- reward logic;
-- evaluator logic;
-- orchestration logic.
-
-The rest of the application must communicate through `LLMProvider`, not directly through Ollama.
-
----
-
-# 10. `arena/agents/`
-
-Contains agent behavior.
-
----
-
-# 10.1 `arena/agents/base.py`
-
-Defines the conceptual agent interface.
-
-An agent must have:
+The runtime must preserve:
 
 ```text
-identity
-role
-model
-tools
-memory
-observe()
-act()
+assistant
+    tool_calls:
+        terminal(...)
+            ↓
+terminal tool
+            ↓
+tool
+    tool_call_id = same ID
+    content = result
+            ↓
+assistant
 ```
 
-The base class must not know about a specific task.
+Do NOT flatten tool calls into fake assistant/user messages.
 
----
+## Required data preservation
 
-# 10.2 `arena/agents/agent.py`
-
-Contains the default LLM-driven agent implementation.
-
-The agent loop should conceptually be:
+For every tool call preserve, where available:
 
 ```text
-observe
-   ↓
-construct context
-   ↓
-call model
-   ↓
-parse action/tool call
-   ↓
-execute tool
-   ↓
-record result
-   ↓
-repeat
+tool_call_id
+tool name
+arguments
+assistant message
+tool result
+stdout
+stderr
+exit code
+error type
 ```
 
-Ollama explicitly supports multi-turn tool-calling loops, so the implementation should use structured tool calls rather than asking models to emit arbitrary shell syntax when practical.
-
-The agent must never directly manipulate Docker internals.
+The tool result must be associated with the exact tool call that produced it.
 
 ---
 
-# 10.3 `arena/agents/roles.py`
+# 6. Critical Bug #3 — Agent Must Not Be Able to Submit an Empty Artifact
 
-Defines role metadata.
-
-Initial roles:
+The current runtime accepts:
 
 ```text
-EXPLORER
-RESEARCHER
-EXECUTOR
-CRITIC
-VERIFIER
-ORCHESTRATOR
+submit
 ```
 
-Role definitions should describe responsibilities and constraints.
+without verifying that the requested output exists.
 
-They must not contain task-specific solutions.
+This must be fixed.
 
----
+Before accepting a submission, execute an environment-side validation.
 
-# 11. `arena/tools/`
-
-Contains capabilities available to agents.
-
----
-
-# 11.1 `arena/tools/base.py`
-
-Defines the generic tool interface.
-
-A tool must specify:
+For this task:
 
 ```text
-name
-description
-input schema
-output schema
-execute()
+/app/private_key.txt
 ```
 
-Tools should be deterministic where practical.
+must:
 
----
-
-# 11.2 `arena/tools/registry.py`
-
-Contains tool registration and lookup.
-
-The registry must prevent arbitrary tool execution unless explicitly registered.
-
----
-
-# 11.3 `arena/tools/terminal.py`
-
-Defines the terminal tool exposed to agents.
-
-The terminal tool must execute commands INSIDE the task environment.
-
-It must NOT execute arbitrary agent-generated commands directly on the host machine.
-
-The host shell is never an implicit agent tool.
-
----
-
-# 12. `arena/environments/`
-
-Contains environment abstractions and Docker implementations.
-
----
-
-# 12.1 `arena/environments/base.py`
-
-Defines the generic environment interface.
-
-Required conceptual operations:
+1. Exist.
+2. Be a regular file.
+3. Be non-empty.
+4. Contain a valid hexadecimal integer.
+5. Represent a scalar satisfying:
 
 ```text
-create()
-reset()
-observe()
-execute()
-snapshot()
-destroy()
+0 < d < N
 ```
 
-The environment abstraction must not contain task-specific logic.
-
----
-
-# 12.2 `arena/environments/docker.py`
-
-Contains Docker-backed environment implementation.
-
-Docker is the default isolation mechanism.
-
-The implementation may manage:
-
-- image creation;
-- container lifecycle;
-- mounts;
-- environment variables;
-- resource limits;
-- networking;
-- command execution;
-- cleanup.
-
-It must not contain:
-
-- evaluator scoring;
-- agent prompts;
-- task-specific solutions.
-
-Docker's purpose is to provide an isolated, reproducible runtime environment.
-
----
-
-# 13. `arena/memory/`
-
-Contains agent memory.
-
----
-
-# 13.1 `arena/memory/base.py`
-
-Defines memory interface.
-
-Memory should support:
+where:
 
 ```text
-write()
-read()
-search()
-clear()
+N =
+0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 ```
 
----
+The runtime may perform only format/range validation.
 
-# 13.2 `arena/memory/local.py`
-
-Initial local implementation.
-
-Use simple local structures/files.
-
-Do NOT introduce a vector database.
-
-Do NOT introduce embeddings unless a demonstrated research requirement appears.
-
-Memory must preserve provenance where practical.
-
----
-
-# 14. `arena/communication/`
-
-Contains inter-agent communication.
-
----
-
-# 14.1 `arena/communication/messages.py`
-
-Defines message schema.
-
-Messages should include:
+It MUST NOT access:
 
 ```text
-message_id
-sender
-recipient
-timestamp
-message_type
-content
-metadata
+/tests/ground_truth.json
 ```
 
-Message types may include:
+or otherwise leak the answer.
+
+If artifact validation fails, do not terminate the episode as successful.
+
+Return a structured failure to the agent, for example:
 
 ```text
-FACT
-HYPOTHESIS
-REQUEST
-RESULT
-WARNING
-CRITIQUE
-DECISION
+Submission rejected:
+required artifact /app/private_key.txt is missing or invalid.
+Continue working.
 ```
 
----
-
-# 14.2 `arena/communication/bus.py`
-
-Defines the communication mechanism.
-
-Initial implementation should be in-process.
-
-Do NOT add Redis or a message broker.
-
-Communication must be recordable as part of the trajectory.
+This creates a proper recovery loop.
 
 ---
 
-# 15. `arena/orchestration/`
+# 7. Critical Bug #4 — Do Not Change the Evaluator to Accommodate the Agent
 
-Contains policies controlling agent coordination.
-
----
-
-# 15.1 `arena/orchestration/base.py`
-
-Defines the orchestrator interface.
-
-An orchestrator chooses actions such as:
+The evaluator is correct to reject:
 
 ```text
-SELECT_AGENT
-DELEGATE
-REQUEST_REVIEW
-REQUEST_VERIFICATION
-RETRY
-STOP
+/app/private_key.txt = ""
 ```
 
-The orchestrator must not directly implement environment-specific solutions.
+The current evaluator reads the file and parses it as hexadecimal.
+
+The evaluator then checks:
+
+```text
+0 < d < N
+```
+
+and exact equality with the protected ground truth.
+
+It also independently checks:
+
+```text
+d * G == expected_public_key
+```
+
+Do NOT:
+
+* change expected output;
+* weaken equality;
+* expose ground truth;
+* accept approximate keys;
+* modify the tests to make the current agent pass;
+* make the evaluator derive the answer from agent output;
+* give the agent access to protected evaluator data.
+
+The benchmark must remain trustworthy.
+
+The original specification requires a clear objective, isolated environment, trusted evaluator, reference solution, known difficulty, and reproducible setup.
 
 ---
 
-# 15.2 `arena/orchestration/sequential.py`
+# 8. Critical Bug #5 — Replace Reward Side-Channel Logic
 
-Initial deterministic orchestration strategy.
+The current evaluator executes:
+
+```text
+/tests/test.sh
+```
+
+and then reads:
+
+```text
+/logs/verifier/reward.txt
+```
+
+This is fragile.
+
+The evaluator should directly consume the test execution result.
+
+Required conceptual API:
+
+```python
+evaluation = evaluator.evaluate(...)
+```
+
+returning:
+
+```python
+{
+    "success": bool,
+    "score": float,
+    "metrics": {...},
+    "failure_reason": str | None,
+}
+```
+
+The evaluator must remain independent of agent reasoning.
+
+The original project specification explicitly defines the evaluator as producing success, score, metrics, and failure reason.
+
+The `test.sh` wrapper may remain temporarily for compatibility, but the platform evaluator must not fundamentally depend on a mutable text file for reward computation.
+
+---
+
+# 9. Critical Bug #6 — Increase and Configure Execution Budget
+
+The current CLI has a hard-coded/default:
+
+```text
+max_steps = 100
+```
+
+This is not appropriate for an expert cryptanalytic task.
+
+The task involves:
+
+```text
+dataset inspection
+cryptographic reasoning
+HNP formulation
+lattice construction
+code implementation
+debugging
+LLL/BKZ
+candidate extraction
+verification
+```
+
+The execution budget must come from task/experiment configuration.
 
 Example:
 
-```text
-Explorer
-→ Researcher
-→ Executor
-→ Critic
-→ Verifier
+```yaml
+limits:
+  max_steps: 500
+  timeout_seconds: 1200
 ```
 
-This is the baseline against which learned orchestration will eventually be compared.
+Do not silently override task configuration with a CLI default.
 
-Do not implement RL here.
+CLI arguments may override configuration only when explicitly provided.
 
----
-
-# 16. `arena/evaluation/`
-
-This package is one of the most security-sensitive parts of the project.
+The task's original intended architecture uses controlled resource budgets and reproducible experiments.
 
 ---
 
-# 16.1 `arena/evaluation/evaluator.py`
+# 10. Critical Bug #7 — Actually Enforce Docker Resource Limits
 
-Defines the evaluator interface.
+Task configuration must correspond to actual infrastructure.
 
-The evaluator receives:
+If configuration says:
 
-```text
-task
-final environment state
-protected evaluation data
+```yaml
+environment:
+  network: disabled
+
+limits:
+  cpus: 2
+  memory_mb: 2048
+  storage_mb: 10240
 ```
 
-and produces:
+then Docker must actually enforce those constraints.
+
+At minimum enforce:
 
 ```text
-success
-score
-metrics
-failure reason
+CPU
+memory
+network isolation
+execution timeout
 ```
 
-The evaluator should be independent from agent reasoning.
+Do not merely place resource limits in prompts or YAML.
+
+The project specification explicitly states that agents must be treated as untrusted code execution and that isolation is mandatory.
 
 ---
 
-# 16.2 `arena/evaluation/rewards.py`
+# 11. Network Configuration Must Be Consistent
 
-Contains reward calculations.
-
-Reward components may include:
+The current Docker implementation disables networking:
 
 ```text
-task success
-progress
-information gain
-recovery
-efficiency
-communication cost
-wasted actions
-unsafe actions
+network_mode="none"
 ```
 
-Reward logic must be versioned.
+That is appropriate for this benchmark.
 
-Do not silently modify reward coefficients during experiments.
+The task configuration must therefore also state:
+
+```yaml
+network: disabled
+```
+
+Do not have configuration claim internet access while Docker silently disables it.
+
+Configuration and infrastructure must describe the same experiment.
 
 ---
 
-# 16.3 `arena/evaluation/metrics.py`
+# 12. Task Configuration Must Use One Serialization Format
 
-Contains non-training metrics.
-
-Examples:
+The repository currently has a file named:
 
 ```text
-success_rate
-episode_length
-tool_calls
-token_usage
-wall_time
-recovery_rate
-communication_count
-communication_cost
-unsafe_actions
+task.yaml
 ```
 
-Metrics and rewards are separate concepts.
+but parses it as TOML.
 
-A metric may be reported without being part of the reward.
+This must be corrected.
 
----
-
-# 17. `arena/trajectories/`
-
-Contains trajectory recording.
-
----
-
-# 17.1 `arena/trajectories/schema.py`
-
-Defines Pydantic schemas for:
-
-```text
-Episode
-TrajectoryStep
-Observation
-Action
-ToolCall
-ToolResult
-Message
-RewardEvent
-EvaluationResult
-```
-
-Schemas must be stable.
-
-Breaking changes require versioning.
-
----
-
-# 17.2 `arena/trajectories/recorder.py`
-
-Records execution events.
-
-Every meaningful interaction should be recordable:
-
-```text
-agent action
-tool call
-tool result
-agent message
-environment event
-reward
-evaluation
-```
-
-The recorder must not alter agent behavior.
-
-Recording should be observational.
-
----
-
-# 18. `arena/cli/`
-
-Contains command-line interfaces.
-
----
-
-# 18.1 `arena/cli/main.py`
-
-The CLI should eventually support:
-
-```text
-arena task list
-arena task validate
-arena env build
-arena env reset
-arena run
-arena evaluate
-arena analyze
-arena experiment
-arena replay
-```
-
-Do not implement every command initially.
-
-Implement only commands backed by working functionality.
-
----
-
-# 19. `tasks/`
-
-This directory contains benchmark tasks.
-
-A task is an environment specification, not an agent implementation.
-
-Each task must be independently runnable.
-
----
-
-# 19.1 Task Directory Structure
-
-Each task should follow:
-
-```text
-tasks/<task_id>/
-├── task.yaml
-├── README.md
-├── environment/
-├── evaluator/
-└── reference/
-```
-
----
-
-# 19.2 `task.yaml`
-
-Contains task metadata.
+Use actual YAML for `task.yaml`.
 
 Example:
 
@@ -1188,7 +565,10 @@ difficulty: expert
 
 objective:
   type: state_change
-  description: Recover and verify the target private key.
+  description: >
+    Recover the ECDSA private key from the provided biased-nonce
+    signature dataset and write it to /app/private_key.txt
+    as a hexadecimal integer.
 
 environment:
   runtime: docker
@@ -1197,134 +577,382 @@ environment:
 limits:
   max_steps: 500
   timeout_seconds: 1200
+  cpus: 2
+  memory_mb: 2048
+  storage_mb: 10240
 
 agents:
-  max_agents: 5
-  communication: true
-  partial_observability: true
+  max_agents: 1
+  communication: false
 
 evaluation:
   correctness: true
-  efficiency: true
-  safety: true
 ```
 
-The task specification must describe the task without exposing hidden ground truth.
+If the repository intentionally wants TOML instead, rename the file to:
+
+```text
+task.toml
+```
+
+Do not keep a misleading `.yaml` extension.
 
 ---
 
-# 19.3 `tasks/<task>/README.md`
+# 13. Do Not Leak the Solution Explanation
 
-Public task documentation.
+The ECDSA task may contain internal/reference material describing:
 
-Must explain:
+```text
+HNP
+Kannan embedding
+LLL
+BKZ
+```
 
-- task purpose;
-- user-facing objective;
-- environment;
-- expected interaction;
-- constraints;
-- how to run the task;
-- evaluation at a high level.
+and other solution methodology.
 
-Must NOT expose:
+Do NOT automatically inject hidden/reference solution material into the benchmark agent context.
 
-- private ground truth;
-- hidden test data;
-- reference solution;
-- evaluator weaknesses.
+The benchmark should preserve the intended challenge difficulty.
 
----
+Separate:
 
-# 20. Task Environment
+```text
+public task instructions
+```
 
-The environment contains everything the agent is legitimately allowed to interact with.
+from:
 
-It may contain:
+```text
+reference solution
+protected ground truth
+```
 
-- source code;
-- logs;
-- datasets;
-- services;
-- configuration;
-- binaries;
-- intentionally broken components.
+The original task specification explicitly states that the ECDSA challenge should preserve its difficulty and should not be simplified merely to make the first agent succeed.
 
-It must NOT contain:
-
-- ground-truth private keys;
-- evaluator secrets;
-- reference solution files;
-- scoring internals;
-- host credentials.
+For debugging, a separate non-benchmark "methodology-assisted" mode may be implemented later.
 
 ---
 
-# 21. Task Dockerfile
+# 14. Initial Agent Architecture
 
-Each environment must be independently buildable.
+For the immediate repair, make the single-agent architecture robust first.
 
-The Dockerfile may contain:
+Use:
 
-- OS base image;
-- system dependencies;
-- Python dependencies;
-- application files;
-- task data;
-- startup configuration.
+```text
+SingleAgent
+    ↓
+LLMProvider
+    ↓
+ToolRegistry
+    ↓
+TerminalTool
+    ↓
+DockerEnvironment
+```
 
-The Dockerfile must NOT contain:
+Do NOT prematurely require the multi-agent architecture to solve this immediate runtime bug.
 
-- host secrets;
-- evaluator credentials;
-- private benchmark keys;
-- external service credentials.
+The original specification defines the Single-Agent MVP as the first milestone.
 
-Pin versions where reproducibility requires it.
+After the vertical slice works, the architecture should support:
 
----
+```text
+Explorer
+Researcher
+Executor
+```
 
-# 22. `tasks/<task>/evaluator/`
-
-The evaluator is trusted infrastructure.
-
-It must be logically separated from the agent environment.
-
-Evaluator code may contain:
-
-- ground truth;
-- protected tests;
-- correctness checks;
-- scoring logic.
-
-Evaluator code must NEVER be copied into the agent's environment.
+as a later multi-agent MVP.
 
 ---
 
-# 23. `tasks/<task>/reference/`
+# 15. Agent Prompt Requirements
 
-Contains trusted reference material.
+The agent must receive enough legitimate information to understand:
 
-May contain:
+```text
+what task it is solving
+where the data is
+what output is required
+how to submit
+```
 
-- reference solution;
-- expected output;
-- validation artifacts;
-- researcher-only notes.
+For this task, the context should clearly communicate:
 
-This directory is never mounted into the agent container.
+```text
+Dataset:
+  /app/data/signatures.json
 
-Reference material must never be included in public task artifacts unless intentionally released.
+Required output:
+  /app/private_key.txt
+
+Output format:
+  hexadecimal integer
+
+Success condition:
+  recover the correct private key
+```
+
+Do NOT include:
+
+```text
+private_key_hex
+ground_truth.json
+protected evaluator contents
+reference solution
+```
+
+unless running an explicitly separate debugging mode that is not considered a benchmark episode.
 
 ---
 
-# 24. Initial ECDSA Task
+# 16. Terminal Tool Requirements
 
-The first environment is based on the existing cryptography challenge.
+The terminal tool MUST execute commands inside the Docker environment.
 
-The task involves recovering an ECDSA private key from biased nonces using cryptanalytic techniques.
+It MUST NOT execute agent-generated commands directly on the host.
 
-The environment is valuable because it requires:
+Required conceptual interface:
+
+```python
+terminal.execute(
+    command: str,
+    timeout: int | None = None,
+)
+```
+
+Return structured data:
+
+```python
+{
+    "exit_code": int,
+    "stdout": str,
+    "stderr": str,
+    "duration": float,
+}
+```
+
+Where applicable include:
+
+```text
+error_type
+timeout
+```
+
+The project specification explicitly requires the terminal tool to execute inside the task environment and not directly on the host.
+
+---
+
+# 17. Environment Failure Classification
+
+The system must distinguish:
+
+```text
+agent failure
+tool failure
+environment failure
+evaluator failure
+infrastructure failure
+```
+
+Do not collapse every failure into:
+
+```text
+agent failed
+```
+
+For example:
+
+```text
+terminal timeout
+```
+
+is a tool/environment event.
+
+```text
+Docker failed to start
+```
+
+is infrastructure failure.
+
+```text
+private_key.txt missing
+```
+
+is an agent/task-completion failure.
+
+```text
+pytest crashed
+```
+
+may be evaluator/infrastructure failure depending on cause.
+
+This distinction is required for meaningful research metrics.
+
+---
+
+# 18. Trajectory Recording
+
+The trajectory must record the full episode.
+
+At minimum record:
+
+```text
+episode_id
+timestamp
+step
+agent_id
+agent_role
+observation
+action
+model response
+tool call
+tool result
+environment event
+reward
+evaluation
+```
+
+Tool calls must include:
+
+```text
+tool_call_id
+tool_name
+arguments
+```
+
+Tool results must include:
+
+```text
+tool_call_id
+stdout
+stderr
+exit_code
+duration
+error_type
+```
+
+Model interactions should record available:
+
+```text
+model
+input token count
+output token count
+generation duration
+model load duration
+```
+
+The original specification requires fine-grained trajectory recording and model usage measurement.
+
+Trajectory recording must be observational and must not modify agent behavior.
+
+---
+
+# 19. Trajectory Format
+
+Use JSONL.
+
+Recommended:
+
+```text
+results/
+└── <experiment_id>/
+    └── episodes/
+        └── episode_<id>.jsonl
+```
+
+Each line represents one structured event.
+
+Do not write one giant opaque JSON object containing the entire episode.
+
+Define versioned schemas.
+
+For example:
+
+```json
+{
+  "schema_version": "1.0",
+  "episode_id": "...",
+  "step": 12,
+  "event_type": "tool_result",
+  "agent_id": "executor",
+  "tool_call_id": "...",
+  "tool_name": "terminal",
+  "data": {
+    "exit_code": 0,
+    "stdout": "...",
+    "stderr": ""
+  }
+}
+```
+
+Schema changes require explicit versioning.
+
+---
+
+# 20. Artifact Validation Must Remain Separate from Protected Evaluation
+
+There are two different checks:
+
+## Runtime artifact validation
+
+Allowed:
+
+```text
+file exists
+file non-empty
+valid hex
+integer range
+```
+
+Not allowed:
+
+```text
+compare against ground truth
+read protected evaluator data
+derive answer from evaluator
+```
+
+## Protected evaluation
+
+Allowed:
+
+```text
+compare exact private key
+derive public key
+calculate benchmark score
+```
+
+The protected evaluator must remain inaccessible to the agent.
+
+This separation is mandatory for benchmark integrity.
+
+---
+
+# 21. ECDSA Task Requirements
+
+The task must continue using the provided:
+
+```text
+/app/data/signatures.json
+```
+
+dataset.
+
+Do not replace the benchmark with a trivial private-key lookup.
+
+Do not:
+
+```text
+embed the private key in the dataset
+copy the ground truth into /app
+generate the key at runtime from evaluator data
+```
+
+The purpose of the task is to require:
 
 ```text
 repository exploration
@@ -1342,19 +970,78 @@ debugging
 verification
 ```
 
-The initial implementation should preserve the original challenge's difficulty.
-
-Do not simplify it merely to make the first agent succeed.
+as defined by the original task specification.
 
 ---
 
-# 25. `experiments/`
+# 22. Cryptographic Task Difficulty
 
-This directory contains experiment configurations and research notes.
+Do not alter the challenge merely to increase the probability of success.
 
-It must NOT contain source code that belongs in `arena/`.
+The intended task involves biased ECDSA nonces and recovery of the private key.
 
-An experiment should specify:
+The intended solution class may involve:
+
+```text
+Hidden Number Problem
+lattice construction
+Kannan embedding
+LLL/BKZ
+candidate extraction
+public-key verification
+```
+
+The runtime should make the task executable correctly.
+
+It should NOT secretly solve the task for the model.
+
+---
+
+# 23. Model Capability Experiments
+
+After runtime correctness is established, support controlled model experiments.
+
+At minimum make it possible to compare:
+
+```text
+Model A
+Model B
+```
+
+under identical:
+
+```text
+task
+dataset
+Docker image
+resource limits
+step limits
+temperature
+evaluation
+```
+
+The only intended experimental variable should be the model/configuration being studied.
+
+This is necessary for research reproducibility.
+
+---
+
+# 24. Do Not Hard-Code Experimental Conditions
+
+Avoid code such as:
+
+```python
+max_steps = 100
+model = "llama3.2"
+temperature = 0.7
+network = False
+```
+
+inside the runtime.
+
+Experimental conditions belong in configuration.
+
+The experiment must record:
 
 ```text
 task
@@ -1366,1113 +1053,329 @@ random seed
 resource limits
 ```
 
-Experiment configurations should be immutable once published.
-
-If a configuration changes materially, create a new experiment version.
+The original project specification explicitly requires reproducible experiment configuration.
 
 ---
 
-# 26. `results/`
+# 25. Testing Requirements
 
-Runtime output only.
+Before considering the repair complete, implement or update tests for:
 
-This directory should contain:
+## Unit tests
 
 ```text
-experiment/
-    config.json
-    episodes/
-    metrics.json
-    summary.json
+test_config_loading
+test_model_configuration
+test_tool_call_serialization
+test_tool_result_serialization
+test_artifact_validation
+test_trajectory_schema
+test_evaluator_result
 ```
 
-Results should generally not be committed to the repository.
-
-Large trajectories must not be committed.
-
----
-
-# 27. `tests/`
-
-Tests are mandatory.
-
----
-
-# 27.1 `tests/unit/`
-
-Test individual components.
-
-Examples:
+## Integration tests
 
 ```text
-test_config.py
-test_messages.py
-test_trajectory.py
-test_tools.py
-test_rewards.py
-test_agent.py
+test_docker_environment
+test_terminal_tool_inside_container
+test_agent_tool_loop
+test_submission_validation
+test_evaluator_integration
+test_complete_episode
 ```
 
-Unit tests must not require Ollama or Docker unless explicitly marked as integration tests.
+## ECDSA evaluator tests
 
----
-
-# 27.2 `tests/integration/`
-
-Tests:
-
-- Ollama integration;
-- Docker environment;
-- agent/tool interaction;
-- evaluator integration;
-- complete episode execution.
-
-Integration tests may require local infrastructure.
-
----
-
-# 27.3 `tests/fixtures/`
-
-Contains safe deterministic test fixtures.
-
-Do not place production benchmark secrets here.
-
----
-
-# 28. `scripts/`
-
-Contains temporary or operational utilities.
-
-Scripts must not become the primary application interface.
-
-If a script becomes essential functionality, move the logic into `arena/` and make the script a thin wrapper.
-
----
-
-# 29. `docs/`
-
-Documentation must explain architecture rather than duplicate implementation details unnecessarily.
-
-Required documents:
+The existing protected evaluator must continue to pass only when:
 
 ```text
-architecture.md
-agents.md
-environments.md
-evaluation.md
-trajectories.md
-multi_agent.md
-reinforcement_learning.md
+/app/private_key.txt
 ```
 
----
-
-# 30. Gymnasium Integration
-
-Gymnasium is the standard single-agent RL environment interface.
-
-Custom environments should follow Gymnasium's environment model, including explicit observation and action spaces, reset/step semantics, and proper termination/truncation handling.
-
-The Agent Arena environment abstraction may wrap Gymnasium rather than exposing Gymnasium directly to every component.
-
-Do not force LLM agents to emit raw Gymnasium actions.
-
-LLM actions should first pass through the Agent Arena action abstraction.
+contains the correct key.
 
 ---
 
-# 31. PettingZoo Integration
+# 26. Mandatory Regression Test
 
-PettingZoo is the standard multi-agent RL interface for this project.
+Create a regression test for the exact current failure.
 
-PettingZoo supports both:
-
-- Agent Environment Cycle (AEC);
-- Parallel API.
-
-The project should initially use the API that best matches sequential agent orchestration.
-
-PettingZoo should be integrated at the RL/environment boundary.
-
-The agent runtime should not depend directly on PettingZoo-specific internals.
-
----
-
-# 32. Ollama Integration
-
-Ollama is the default local LLM provider.
-
-Local API:
+Given:
 
 ```text
-http://localhost:11434/api
+/app/private_key.txt
 ```
 
-Local access does not require authentication.
+does not exist or is empty,
 
-The implementation should prefer structured chat/tool calling.
-
-Ollama supports tool calling and multi-turn agent loops.
-
-Model/runtime usage metrics should be captured when available.
-
-Ollama exposes metrics such as:
+the runtime must NOT report:
 
 ```text
-total_duration
-load_duration
-prompt_eval_count
-prompt_eval_duration
-eval_count
-eval_duration
+SUCCESS
 ```
 
-These should be stored as trajectory metadata when available.
+and must NOT silently finish the episode.
 
----
-
-# 33. Tool Calling Rules
-
-Agents should use structured tool calls.
-
-Preferred:
+Instead it must report something equivalent to:
 
 ```text
-Model
- ↓
-Tool call
- ↓
-Tool executor
- ↓
-Tool result
- ↓
-Model
+Artifact validation failed:
+private_key.txt is missing or empty.
 ```
 
-Avoid relying on fragile natural-language parsing such as:
+The agent must be allowed to continue when the configured episode budget permits.
+
+---
+
+# 27. Successful End-to-End Test
+
+Create an integration test using a deterministic/mock agent that writes a known valid fixture key into:
 
 ```text
-RUN_COMMAND: ls -la
+/app/private_key.txt
 ```
 
-when structured tool calling can represent the same action.
-
-The tool layer must validate arguments before execution.
-
----
-
-# 34. Terminal Security
-
-The terminal is the highest-risk tool.
-
-The agent must NEVER receive unrestricted host shell access.
-
-Commands must execute inside the task environment.
-
-The implementation must enforce:
-
-- container boundaries;
-- execution timeout;
-- output limits;
-- process limits where practical;
-- filesystem boundaries;
-- network policy;
-- cleanup.
-
-The terminal tool must record:
+Then verify:
 
 ```text
-command
-start time
-end time
-exit code
-stdout
-stderr
-resource metadata
+artifact validation succeeds
+        ↓
+evaluator runs
+        ↓
+evaluation result is structured
+        ↓
+trajectory is written
+        ↓
+container is destroyed
 ```
 
----
+This proves that the runtime works independently of LLM intelligence.
 
-# 35. Agent Roles
+This distinction is essential.
 
-Initial roles:
-
-## Explorer
-
-Objective:
-
-> Maximize useful environmental information.
-
-May:
-
-- inspect files;
-- inspect logs;
-- inspect processes;
-- inspect configuration;
-- run read-only diagnostics.
-
-Should avoid unnecessary modifications.
-
----
-
-## Researcher
-
-Objective:
-
-> Develop technically justified hypotheses and solution strategies.
-
-May:
-
-- reason about algorithms;
-- analyze evidence;
-- suggest experiments;
-- inspect information provided by the orchestrator.
-
-Should not be assumed to have unrestricted environment access.
-
----
-
-## Executor
-
-Objective:
-
-> Implement and test proposed solutions.
-
-May:
-
-- write code;
-- execute experiments;
-- install permitted dependencies;
-- run tests.
-
----
-
-## Critic
-
-Objective:
-
-> Find weaknesses in the proposed solution.
-
-Should actively search for:
-
-- invalid assumptions;
-- incomplete solutions;
-- hidden failure cases;
-- regressions.
-
----
-
-## Verifier
-
-Objective:
-
-> Independently determine whether the task is solved.
-
-The verifier should have an information path that reduces confirmation bias.
-
----
-
-## Orchestrator
-
-Objective:
-
-> Allocate agent actions efficiently.
-
-Possible actions:
+First prove:
 
 ```text
-SELECT_AGENT
-REQUEST_INFORMATION
-DELEGATE
-REQUEST_REVIEW
-REQUEST_VERIFICATION
-RETRY
-STOP
+runtime correctness
 ```
+
+Then measure:
+
+```text
+agent capability
+```
+
+Do not conflate them.
 
 ---
 
-# 36. Multi-Agent Rules
+# 28. Required Debugging Order
 
-Multi-agent behavior must be measurable.
+When the benchmark fails, diagnose in this order:
 
-Every agent interaction must be recordable.
+### Layer 1 — Infrastructure
 
-The system must track:
+Check:
 
 ```text
-agent identity
-role
-observation
-action
-message
-recipient
-timestamp
-reward
-result
+Docker image builds
+container starts
+container remains alive
+network configuration
+resource limits
+command execution
 ```
 
-Do not create agents merely for visual complexity.
+### Layer 2 — Task
 
-Every additional agent must have a measurable purpose.
+Check:
+
+```text
+/app/data/signatures.json exists
+task configuration loads
+objective is passed to agent
+required output path is correct
+```
+
+### Layer 3 — Tool
+
+Check:
+
+```text
+tool call parsed
+arguments parsed
+command executed
+stdout returned
+stderr returned
+exit code returned
+```
+
+### Layer 4 — Agent loop
+
+Check:
+
+```text
+assistant message preserved
+tool call preserved
+tool result returned correctly
+agent receives result
+agent continues
+```
+
+### Layer 5 — Artifact
+
+Check:
+
+```text
+private_key.txt exists
+private_key.txt non-empty
+valid hex
+valid range
+```
+
+### Layer 6 — Evaluator
+
+Check:
+
+```text
+tests copied
+tests execute
+ground truth remains protected
+score calculated
+```
+
+### Layer 7 — Cryptanalysis
+
+Only after Layers 1–6 pass should you conclude:
+
+```text
+the model failed to solve the cryptographic task
+```
+
+This distinction is mandatory.
 
 ---
 
-# 37. Agent Count
+# 29. Required CLI Failure Reporting
 
-The initial system should support:
-
-```text
-1 agent
-2 agents
-3 agents
-5 agents
-```
-
-The default research configuration should begin with three:
+Do not only output:
 
 ```text
-Explorer
-Researcher
-Executor
+success=false
 ```
 
-Critic and Verifier should be introduced afterward.
-
-Do not assume more agents means better performance.
-
----
-
-# 38. Model Assignment
-
-Model assignment must be configurable.
+The CLI must identify the failure category.
 
 Example:
 
-```yaml
-agents:
-  explorer:
-    model: local-8b
+```text
+Status: FAILURE
 
-  researcher:
-    model: local-14b
+Failure category: AGENT_TASK_FAILURE
+Reason: Required artifact /app/private_key.txt was not produced.
 
-  executor:
-    model: local-8b
+Steps: 87
+Tool calls: 41
+Duration: 624.2s
+
+Trajectory:
+results/exp_000001/episodes/episode_000001.jsonl
 ```
 
-Do not hard-code model names into role implementations.
-
-This allows experiments such as:
+Possible categories:
 
 ```text
-single 14B
-```
-
-versus:
-
-```text
-8B + 14B + 8B
+AGENT_FAILURE
+TOOL_FAILURE
+ENVIRONMENT_FAILURE
+EVALUATOR_FAILURE
+INFRASTRUCTURE_FAILURE
 ```
 
 ---
 
-# 39. Resource Constraints
+# 30. Resource Accounting
 
-Experiments should support:
-
-```text
-max_episode_steps
-max_wall_time
-max_tool_calls
-max_model_tokens
-max_communication_messages
-```
-
-Resource limits must be enforced by infrastructure, not merely described in prompts.
-
----
-
-# 40. Memory Rules
-
-Agent memory must distinguish:
+Every episode should record:
 
 ```text
-short-term context
-persistent memory
-shared memory
-private memory
-```
-
-Do not blindly append the entire episode history to every prompt.
-
-Long histories must eventually be summarized or selectively retrieved.
-
-Memory retrieval must be logged.
-
----
-
-# 41. Reward Design
-
-The reward system must distinguish:
-
-```text
-task outcome
-progress
-efficiency
-recovery
-safety
-communication
-```
-
-Do not optimize for command count alone.
-
-Do not optimize for token count alone.
-
-Do not reward textual explanations unless they correspond to verifiable progress.
-
----
-
-# 42. Reward Hacking Prevention
-
-The following behaviors must not generate legitimate positive reward:
-
-- creating fake progress files;
-- modifying evaluator code;
-- modifying protected tests;
-- generating huge amounts of output;
-- repeatedly running commands without information gain;
-- exploiting known evaluator weaknesses;
-- discovering hidden ground truth through filesystem traversal.
-
-The evaluator must validate actual state rather than trusting agent claims.
-
----
-
-# 43. Trajectory Schema
-
-Each trajectory step should conceptually contain:
-
-```json
-{
-  "episode_id": "...",
-  "step": 12,
-  "agent_id": "executor",
-  "observation": {},
-  "action": {},
-  "tool_calls": [],
-  "messages": [],
-  "result": {},
-  "reward": 0.05,
-  "timestamp": "...",
-  "metadata": {}
-}
-```
-
-The schema must be versioned.
-
----
-
-# 44. Experiment Reproducibility
-
-Every experiment must produce:
-
-```text
-config.json
-environment metadata
-model metadata
-trajectory files
-metrics
-evaluation result
-```
-
-An experiment must be identifiable without relying on directory naming conventions alone.
-
-Use stable IDs.
-
----
-
-# 45. Research Baselines
-
-Every new multi-agent method must be compared against at least:
-
-```text
-Baseline 1:
-Single generalist agent
-
-Baseline 2:
-Static multi-agent workflow
-```
-
-When evaluating RL orchestration, also compare against:
-
-```text
-Baseline 3:
-Non-learned orchestrator
-```
-
-Do not report only the best-performing architecture.
-
----
-
-# 46. Mandatory Experimental Metrics
-
-At minimum:
-
-```text
-success_rate
-mean_reward
-median_reward
-episode_length
+steps
 tool_calls
 wall_time
-model_tokens
-communication_count
-communication_tokens
-recovery_rate
-unsafe_action_count
+model
+input_tokens
+output_tokens
 ```
 
-Additional metrics may be added per task.
+when available.
+
+These metrics are necessary because the project's research objective is not merely:
+
+```text
+maximize task success
+```
+
+but to understand task performance under computational and operational costs.
 
 ---
 
-# 47. Collaboration Metrics
+# 31. Security Requirements
 
-Define:
+Treat the agent as untrusted.
+
+The agent may:
 
 ```text
-multi_agent_gain
-communication_efficiency
-cost_adjusted_success
+make destructive commands
+attempt to escape Docker
+attempt evaluator manipulation
+discover unintended files
+consume excessive resources
 ```
 
-For example:
+Therefore:
 
-\[
-MultiAgentGain =
-Success_{multi} - Success_{single}
-\]
+```text
+Docker isolation is mandatory.
+```
 
-and:
+The host filesystem must never become an implicit agent-accessible environment.
 
-\[
-CostAdjustedSuccess =
-\frac{Success}{ComputeCost}
-\]
+The evaluator must remain outside the agent's trust boundary.
 
-Do not claim multi-agent superiority without accounting for increased computation.
+Protected data must never be mounted into `/app`.
 
 ---
 
-# 48. Reinforcement Learning
+# 32. Do Not Implement Yet
 
-RL is NOT part of the first implementation milestone.
-
-First establish:
+Do NOT implement the following as part of this repair:
 
 ```text
-environment
-single agent
-multi-agent
-evaluation
-trajectory recording
-```
-
-Only then introduce RL.
-
-The first RL target should be the orchestrator.
-
-Do NOT initially RL-train the underlying LLM.
-
----
-
-# 49. Initial RL Action Space
-
-The first learned orchestrator may choose:
-
-```text
-EXPLORER
-RESEARCHER
-EXECUTOR
-CRITIC
-VERIFIER
-STOP
-```
-
-The policy should learn:
-
-> Who should act next?
-
-before attempting to learn:
-
-> What should the LLM think?
-
-This keeps the first RL problem computationally manageable.
-
----
-
-# 50. RL State Representation
-
-The initial orchestrator state may include:
-
-```text
-task difficulty
-current progress
-agent confidence
-recent failures
-last action
-episode length
-remaining budget
-communication count
-verification status
-```
-
-Do not include hidden ground truth.
-
----
-
-# 51. Curriculum Learning
-
-Tasks should eventually be organized by difficulty.
-
-Possible progression:
-
-```text
-Level 1
-Deterministic debugging
-
-Level 2
-Multi-file debugging
-
-Level 3
-Ambiguous failure
-
-Level 4
-Long-horizon debugging
-
-Level 5
-Multiple interacting failures
-
-Level 6
-Partial observability
-
-Level 7
-Multi-agent coordination
-```
-
-Difficulty must be measured empirically.
-
-Do not label a task "expert" merely because it looks difficult to a human.
-
----
-
-# 52. Task Generation
-
-Automated task generation is a future feature.
-
-Generated tasks must pass:
-
-```text
-syntactic validation
-environment validation
-reference solution validation
-evaluator validation
-baseline agent testing
-difficulty calibration
-leakage inspection
-human review
-```
-
-Generated tasks must never automatically enter the official benchmark.
-
----
-
-# 53. Prohibited Architectural Choices
-
-Unless explicitly approved as a later research requirement, do NOT add:
-
-```text
+RL
+PettingZoo
+learned orchestrator
+distributed execution
+Ray
+RLlib
+task generation
+cloud inference
+database server
+vector database
 LangChain
 LangGraph
-AutoGen
-CrewAI
-cloud inference APIs
-OpenAI API
-Anthropic API
-Google API
-PostgreSQL
-Redis
-Kubernetes
-Kafka
-RabbitMQ
-hosted vector databases
-hosted observability
-hosted experiment tracking
+critic/verifier architecture
 ```
 
-This is not a statement that these technologies are bad.
+unless required to fix an existing interface.
 
-The reason is architectural discipline and the project's zero-budget/local-first constraint.
-
-If a later experiment genuinely requires one, document the reason before adding it.
+The project specification explicitly requires the initial implementation to establish the single-agent vertical slice before moving to RL, learned orchestration, or distributed infrastructure.
 
 ---
 
-# 54. Prohibited Code Patterns
+# 33. Future Multi-Agent Architecture
 
-Do NOT:
-
-```text
-hard-code API keys
-```
-
-Do NOT:
-
-```text
-execute agent-generated shell commands on the host
-```
-
-Do NOT:
-
-```text
-import task-specific evaluator logic into generic agent code
-```
-
-Do NOT:
-
-```text
-hard-code one model into Agent
-```
-
-Do NOT:
-
-```text
-hard-code one task into Environment
-```
-
-Do NOT:
-
-```text
-hard-code reward values inside agent implementations
-```
-
-Do NOT:
-
-```text
-store hidden ground truth in publicly accessible task files
-```
-
-Do NOT:
-
-```text
-modify evaluator behavior based on the agent's output
-```
-
-Do NOT:
-
-```text
-silently change experiment configuration
-```
-
----
-
-# 55. Dependency Rules
-
-Every dependency must answer:
-
-1. Why is it necessary?
-2. Why can't the functionality be implemented simply in the project?
-3. Does it create a paid or cloud dependency?
-4. Does it complicate reproducibility?
-5. Does it couple the project to a particular vendor?
-
-Prefer the standard library when the functionality is trivial.
-
-Prefer small, focused libraries over large agent frameworks.
-
----
-
-# 56. Code Quality
-
-All production Python code should:
-
-- use type hints;
-- use Pydantic for external/data schemas;
-- use clear names;
-- avoid global mutable state;
-- use explicit dependency injection;
-- have tests for important behavior;
-- avoid hidden side effects.
-
-Formatting and linting should be automated once the basic project is stable.
-
----
-
-# 57. Logging
-
-Use structured logging where possible.
-
-Logs should contain:
-
-```text
-timestamp
-episode_id
-agent_id
-event_type
-message
-metadata
-```
-
-Do not log secrets.
-
-Do not log evaluator ground truth into agent-visible logs.
-
----
-
-# 58. Error Handling
-
-Agent failure is an expected research outcome.
-
-Do not hide failures.
-
-A failed tool call should produce a structured event:
-
-```text
-tool_call
-exit_code
-stdout
-stderr
-error_type
-```
-
-The system should distinguish:
-
-```text
-agent failure
-tool failure
-environment failure
-evaluator failure
-infrastructure failure
-```
-
-These are scientifically different.
-
----
-
-# 59. Determinism
-
-Where possible:
-
-- seed environments;
-- seed pseudo-random generators;
-- record seeds;
-- pin dependencies;
-- pin container images;
-- record model configuration.
-
-LLM inference may remain nondeterministic depending on model/runtime configuration.
-
-That nondeterminism must be recorded rather than ignored.
-
----
-
-# 60. Model Usage Measurement
-
-Every model interaction should record available usage information.
-
-At minimum:
-
-```text
-model
-input token count
-output token count
-generation duration
-model load duration
-```
-
-Ollama's API exposes several of these metrics directly.
-
-These metrics are important because the project explicitly studies performance under resource constraints.
-
----
-
-# 61. Local Data Storage
-
-Initial storage should be:
-
-```text
-SQLite
-+
-JSONL
-+
-Parquet
-```
-
-Do not introduce a database server.
-
-SQLite stores:
-
-```text
-tasks
-experiments
-episodes
-metadata
-aggregate metrics
-```
-
-JSONL stores:
-
-```text
-raw trajectories
-```
-
-Parquet stores:
-
-```text
-large analytical datasets
-```
-
-DuckDB may later be added for analysis over Parquet.
-
----
-
-# 62. Experiment Directory
-
-Recommended:
-
-```text
-results/
-└── exp_000001/
-    ├── config.json
-    ├── environment.json
-    ├── model.json
-    ├── episodes/
-    │   ├── episode_000001.jsonl
-    │   └── episode_000002.jsonl
-    ├── metrics.json
-    └── evaluation.json
-```
-
-Do not mix results from different experiments.
-
----
-
-# 63. Development Order
-
-Implementation MUST proceed in this order unless there is a documented reason to deviate.
-
-## Phase 1
-
-Project skeleton.
-
-## Phase 2
-
-Core types and protocols.
-
-## Phase 3
-
-Ollama provider.
-
-## Phase 4
-
-Tool system.
-
-## Phase 5
-
-Docker environment.
-
-## Phase 6
-
-Single-agent loop.
-
-## Phase 7
-
-Trajectory recording.
-
-## Phase 8
-
-Evaluator.
-
-## Phase 9
-
-ECDSA task integration.
-
-## Phase 10
-
-Multi-agent communication.
-
-## Phase 11
-
-Static orchestration.
-
-## Phase 12
-
-Critic/verifier.
-
-## Phase 13
-
-Research metrics.
-
-## Phase 14
-
-RL orchestrator.
-
-## Phase 15
-
-Additional environments.
-
----
-
-# 64. Definition of Done for Phase 1
-
-Phase 1 is complete when:
-
-```text
-python environment works
-project imports successfully
-tests execute
-CLI starts
-configuration loads
-```
-
----
-
-# 65. Definition of Done for Single-Agent MVP
-
-The MVP is complete when:
-
-```text
-Ollama
-    ↓
-Agent
-    ↓
-Terminal Tool
-    ↓
-Docker
-    ↓
-Task
-    ↓
-Evaluator
-    ↓
-Trajectory
-```
-
-works end-to-end.
-
-A command equivalent to:
-
-```text
-arena run --task ecdsa_nonce_bias_001
-```
-
-must produce a reproducible episode artifact.
-
----
-
-# 66. Definition of Done for Multi-Agent MVP
-
-The multi-agent MVP is complete when:
+After the single-agent MVP is verified, support:
 
 ```text
 Explorer
@@ -2480,277 +1383,223 @@ Researcher
 Executor
 ```
 
-can:
-
-- receive role-specific context;
-- communicate;
-- execute tools;
-- share selected memory;
-- produce a complete trajectory;
-- receive a final evaluation.
-
----
-
-# 67. Definition of Done for RL MVP
-
-The first RL milestone is complete when:
+with:
 
 ```text
-environment state
-    ↓
-orchestrator policy
-    ↓
-agent selection
-    ↓
-episode
-    ↓
-reward
-    ↓
-policy update
+role-specific context
+communication
+selected shared memory
+tool execution
+complete trajectory
+final evaluation
 ```
 
-can run locally.
+The project specification defines this as the Multi-Agent MVP.
 
-The RL policy must be reproducible from a saved configuration/checkpoint.
+Do not make the ECDSA task depend on multi-agent execution until the single-agent path is already stable.
 
 ---
 
-# 68. Research Integrity
+# 34. Definition of Done — Runtime Repair
 
-The project must distinguish:
+The runtime repair is complete only when all of the following are true:
 
 ```text
-observation
-hypothesis
-result
-interpretation
-claim
+[ ] Model is configurable.
+[ ] Agent does not directly depend on Ollama.
+[ ] Task objective reaches the agent.
+[ ] Task instructions reach the agent.
+[ ] Docker environment starts correctly.
+[ ] Docker network policy matches configuration.
+[ ] Docker resource limits are actually enforced.
+[ ] Terminal executes only inside Docker.
+[ ] Structured tool calls are preserved.
+[ ] Structured tool results return to the agent.
+[ ] Tool call IDs are preserved.
+[ ] Agent can continue after tool execution.
+[ ] max_steps is configurable.
+[ ] timeout is configurable.
+[ ] Artifact validation occurs before submit.
+[ ] Empty private_key.txt cannot be submitted.
+[ ] Invalid hexadecimal output cannot be submitted.
+[ ] Protected ground truth is not exposed.
+[ ] Evaluator independently validates correctness.
+[ ] Evaluator returns structured results.
+[ ] Reward is not dependent on fragile side-channel state.
+[ ] Failure categories are distinguishable.
+[ ] Complete trajectory is recorded.
+[ ] Model/tool/resource metadata is recorded.
+[ ] Container is destroyed after the episode.
 ```
-
-Do not encode a desired research conclusion into the evaluator.
-
-If multi-agent systems perform worse than single agents, report that result.
-
-If RL fails to improve orchestration, report that result.
-
-The purpose of the platform is measurement, not confirmation of the project's hypothesis.
 
 ---
 
-# 69. Benchmark Integrity
+# 35. Definition of Done — ECDSA Benchmark
 
-A benchmark task must have:
+The ECDSA benchmark integration is complete when:
 
 ```text
-clear objective
-isolated environment
-trusted evaluator
-reference solution
-known difficulty
-reproducible setup
+[ ] /app/data/signatures.json is available.
+[ ] Agent receives the legitimate task objective.
+[ ] Agent can inspect the dataset.
+[ ] Agent can create code inside the container.
+[ ] Agent can execute cryptanalytic experiments.
+[ ] Agent can write /app/private_key.txt.
+[ ] Runtime validates the artifact.
+[ ] Protected evaluator validates exact correctness.
+[ ] Public-key rederivation test passes.
+[ ] Evaluation result is recorded.
+[ ] Trajectory is recorded.
+[ ] Container is cleaned up.
 ```
 
-The evaluator must test the actual objective.
-
-A benchmark must not reward agents for exploiting accidental implementation details.
-
----
-
-# 70. Security Principle
-
-Treat every agent as untrusted code execution.
-
-Even though the models are local, their generated commands may be destructive.
-
-The system must assume:
+A failed cryptanalytic attempt after all of the above works should be classified as:
 
 ```text
-agent may make mistakes
-agent may execute destructive commands
-agent may attempt to escape the environment
-agent may discover unintended files
-agent may attempt evaluator manipulation
+AGENT_TASK_FAILURE
 ```
 
-Isolation is therefore mandatory.
-
----
-
-# 71. Future Model Backend
-
-The architecture must permit:
+not:
 
 ```text
-Ollama
+INFRASTRUCTURE_FAILURE
 ```
 
-as the initial backend while allowing future providers.
+---
 
-Potential future backends:
+# 36. Required Implementation Strategy
+
+Do not rewrite the repository blindly.
+
+Follow this sequence:
+
+## Step 1
+
+Inspect the current repository.
+
+Identify:
 
 ```text
-vLLM
-local transformers
-other OpenAI-compatible servers
+CLI
+agent
+model provider
+terminal tool
+Docker environment
+task configuration
+evaluator
+trajectory recorder
 ```
 
-No agent implementation should directly depend on the Ollama API.
+## Step 2
 
----
+Write tests that reproduce the current failure.
 
-# 72. Future RL Backend
-
-The first RL implementation may be simple.
-
-Future infrastructure may support:
+Specifically verify:
 
 ```text
-PyTorch
-Stable-Baselines3
-RLlib
-custom policy implementations
+empty /app/private_key.txt
 ```
 
-RL libraries should remain adapters around the Agent Arena environment rather than defining the project's entire architecture.
+cannot be submitted successfully.
+
+## Step 3
+
+Fix structured tool calling.
+
+## Step 4
+
+Fix model configuration.
+
+## Step 5
+
+Fix artifact validation.
+
+## Step 6
+
+Fix evaluator result handling.
+
+## Step 7
+
+Fix Docker resource enforcement.
+
+## Step 8
+
+Fix configuration format/consistency.
+
+## Step 9
+
+Fix trajectory recording.
+
+## Step 10
+
+Run a deterministic mock-agent integration test.
+
+## Step 11
+
+Run the actual ECDSA benchmark.
+
+## Step 12
+
+Only then diagnose cryptanalytic/model performance.
 
 ---
 
-# 73. Future Distributed Execution
+# 37. Acceptance Criteria
 
-Distributed execution is explicitly out of scope for the initial implementation.
-
-The architecture may eventually support:
+Do not declare the task complete merely because:
 
 ```text
-Ray
-RLlib
-parallel Docker environments
+pytest starts
 ```
 
-but local execution must remain fully functional.
-
----
-
-# 74. Future Benchmark
-
-The eventual benchmark should contain environments from multiple domains:
+Do not declare it complete merely because:
 
 ```text
-cryptography
-security
-Linux
-networking
-DevOps
-databases
-distributed systems
-software engineering
-forensics
+Docker starts
 ```
 
-The first benchmark should prioritize quality over quantity.
-
-Five excellent tasks are more valuable than fifty poorly validated tasks.
-
----
-
-# 75. First Research Experiments
-
-The first experiments should be:
-
-## Experiment A
-
-Single 14B generalist.
-
-## Experiment B
-
-Three-agent team:
+Do not declare it complete merely because:
 
 ```text
-8B Explorer
-14B Researcher
-8B Executor
+the agent makes tool calls
 ```
 
-## Experiment C
+The minimum acceptance criterion is:
 
-Three 8B agents.
+```text
+agent → tool → Docker → artifact → evaluator → reward → trajectory
+```
 
-## Experiment D
+working end-to-end.
 
-Static orchestration versus adaptive orchestration.
-
-## Experiment E
-
-Communication enabled versus communication budgeted.
-
-These experiments should be run under controlled resource budgets.
+The original project defines the Single-Agent MVP in essentially these terms.
 
 ---
 
-# 76. Central Research Metric
+# 38. Final Rule
 
-The project should eventually study:
+Do not optimize the architecture around the current model.
 
-\[
-Performance =
-f(
-task\ success,
-compute\ cost,
-time,
-communication,
-recovery,
-safety
-)
-\]
+Optimize the architecture around future experiments.
 
-The objective is not simply:
-
-\[
-maximize\ success
-\]
-
-but approximately:
-
-\[
-maximize
-\frac{useful\ task\ performance}
-{computational\ and\ operational\ cost}
-\]
-
----
-
-# 77. Golden Rule
-
-When implementing a new feature, ask:
-
-> Does this improve the ability to measure, understand, train, or evaluate autonomous terminal-agent behavior?
-
-If the answer is no, the feature probably does not belong in the core platform.
-
----
-
-# 78. Final Architectural Principle
-
-The most important rule in this repository is:
+The project specification's central architectural principle is:
 
 ```text
 Do not optimize the architecture for today's model.
 Optimize the architecture for tomorrow's experiment.
 ```
 
-Ollama is today's inference runtime.
+Ollama is the current inference runtime.
 
 The agent abstraction is the research interface.
 
-Docker is today's environment isolation mechanism.
-
-Gymnasium/PettingZoo are the RL interfaces.
+Docker is the current isolation mechanism.
 
 The evaluator is the source of truth.
 
-The trajectory is the primary research artifact.
+The trajectory is a primary research artifact.
 
-The orchestrator is the eventual learning target.
+The orchestrator is a future learning target.
 
 The benchmark is the experimental substrate.
 
@@ -2758,114 +1607,27 @@ The research question is the product.
 
 ---
 
-# 79. Immediate Implementation Target
+# 39. Final Instruction to the Coding Agent
 
-Do not implement the entire repository at once.
+Implement the changes above directly in the repository.
 
-The first implementation should create only:
+Do not merely describe the changes.
 
-```text
-AGENTS.md
-README.md
-LICENSE
-pyproject.toml
+For every modification:
 
-arena/
-    __init__.py
-    core/
-    models/
-    agents/
-    tools/
-    environments/
-    trajectories/
+1. Inspect the existing implementation.
+2. Preserve compatible interfaces where practical.
+3. Modify only what is necessary.
+4. Add regression tests.
+5. Run the relevant tests.
+6. Run the complete vertical-slice integration test.
+7. Run the ECDSA evaluator.
+8. Report the exact remaining failure if the cryptanalytic agent still cannot recover the key.
 
-tests/
-```
+Do not hide failures.
 
-Then implement:
+Do not weaken the evaluator.
 
-```text
-OllamaProvider
-TerminalTool
-DockerEnvironment
-SingleAgent
-TrajectoryRecorder
-```
+Do not expose ground truth.
 
-Then connect them.
-
-Only after that should the ECDSA environment be integrated.
-
-Do not implement:
-
-```text
-RL
-PettingZoo
-Critic
-Verifier
-Learned Orchestrator
-Task Generator
-Distributed Execution
-```
-
-until the single-agent vertical slice works.
-
----
-
-# 80. First Vertical Slice
-
-The first successful execution should look like:
-
-```text
-Task
- ↓
-Create Docker container
- ↓
-Agent receives objective
- ↓
-Agent inspects environment
- ↓
-Agent calls terminal tool
- ↓
-Terminal executes inside container
- ↓
-Result returned to agent
- ↓
-Agent continues
- ↓
-Evaluator checks final state
- ↓
-Reward calculated
- ↓
-Trajectory saved
- ↓
-Container destroyed
-```
-
-Command:
-
-```text
-arena run --task ecdsa_nonce_bias_001
-```
-
-Expected output:
-
-```text
-Task: ecdsa_nonce_bias_001
-Agent: explorer/executor
-Model: <local Ollama model>
-
-Status: SUCCESS / FAILURE
-
-Reward: <value>
-Steps: <value>
-Tool calls: <value>
-Duration: <value>
-
-Trajectory:
-results/<episode>.jsonl
-```
-
-This is the first real milestone.
-
-Everything else comes after this.
+Do not claim success until the complete pipeline has been demonstrated.

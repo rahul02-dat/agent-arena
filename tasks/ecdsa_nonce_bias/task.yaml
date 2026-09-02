@@ -1,114 +1,115 @@
-artifacts = ["/app/private_key.txt"]
+id: ecdsa_nonce_bias_001
+version: "1.0"
+name: ECDSA Nonce Bias Recovery
+category: cryptography
+difficulty: expert
 
-[agent_task]
-objective = """
-Recover the ECDSA private key from the biased-nonce signature dataset available
-inside the task environment and write the recovered private key as a
-hex-encoded integer to /app/private_key.txt.
-"""
+model:
+  name: "llama3.2"
+  temperature: 0.0
 
-instructions = """
-You have access to an isolated terminal environment containing the task files
-and permitted dependencies.
+agent_task:
+  objective: |
+    Recover the ECDSA private key from the biased-nonce signature dataset available
+    inside the task environment and write the recovered private key as a
+    hex-encoded integer to /app/private_key.txt.
+  instructions: |
+    You have access to an isolated terminal environment containing the task files
+    and permitted dependencies.
 
-Inspect the files available inside /app and determine an appropriate solution
-method. The required output is /app/private_key.txt.
+    Inspect the files available inside /app and determine an appropriate solution
+    method. The required output is /app/private_key.txt.
 
-Do not assume evaluator internals or hidden ground truth are available.
-"""
-[metadata]
-category = "security"
-subcategory = "cryptanalysis"
-model_tested = "GPT-5.4"
-agent_tested = "Terminus-2"
-task_objective = ["analyze", "recover_or_repair_artifact"]
-artifact_type = ["security_artifact"]
-expert_time_estimate_hours = 5
-difficulty_explanation = """
-The task cannot be solved by any of the standard nonce-reuse attacks: every
-nonce is distinct and the per-signature bias is only 5 of 256 bits, far too
-little to brute-force or spot algebraically from a pair of signatures. The
-only route in is recognizing that a biased ECDSA nonce turns the signing
-equation into an instance of the Hidden Number Problem (HNP), then building
-a lattice in which the private key is embedded as an unusually short vector
-and pulling it out with LLL/BKZ lattice reduction. That requires: deriving
-the correct linear HNP relation from the ECDSA equation (getting a sign or
-modular-inverse convention wrong silently produces a useless lattice),
-choosing a working embedding (Kannan/CVP-style) and target-vector scaling
-so the true key is actually the shortest vector rather than lost in the
-lattice's typical-vector noise, and picking a signature count and reduction
-strength that make recovery reliable rather than a coin flip. At only 5
-leaked bits per signature (275 bits of total information for a 256-bit key)
-the lattice gap is tighter than classic textbook examples; plain LLL fails,
-and BKZ with a small block size (e.g. 20) is unreliable — the solver must
-escalate to block sizes around 30, which is a non-trivial parameter-tuning
-decision that requires understanding of lattice-reduction tradeoffs.
-This is the same reduction real cryptanalysts use to break hardware wallets,
-TPMs, and smart cards with biased or partially-leaked nonces (e.g. the
-Minerva and related ECDSA side-channel disclosures), and it is the kind of
-work done by applied cryptanalysis teams at firms like NCC Group or Trail of
-Bits, or in academic attack labs, when auditing a signing implementation.
-The signature data is synthetically generated from a real secp256k1 keypair
-with a deliberately biased nonce generator; synthetic generation is
-appropriate here because what must be realistic is the bias structure
-itself (the exact leak model an implementation bug would produce), not
-organic noise, and no public dataset of real leaked-nonce signatures exists
-at the fidelity this task needs.
-"""
-solution_explanation = """
-For signature i, the ECDSA relation s_i = k_i^-1 (h_i + r_i d) mod n can be
-solved for the nonce: k_i = s_i^-1 h_i + s_i^-1 r_i d mod n. Writing the
-known high bits as msb_i and the bit-length of the unknown low part as
-u = nonce_bitlength - leaked_bits, k_i = msb_i * 2^u + 2^(u-1) + e_i with
-|e_i| <= 2^(u-1) centered. Substituting and rearranging gives
-a_i d + b_i = e_i (mod n), with a_i = s_i^-1 r_i mod n and
-b_i = s_i^-1 h_i - msb_i * 2^u - 2^(u-1) mod n -- a classic Hidden Number Problem: d
-is the hidden number, and each equation states that a_i d + b_i mod n is
-small.
+    Do not assume evaluator internals or hidden ground truth are available.
 
-This is solved as a closest-vector problem via Kannan's embedding. Build a
-lattice from m = 55 signature equations: m basis rows n*e_i (i = 1..m,
-enforcing the mod-n reduction freedom), one row (a_1, ..., a_m, 0) encoding
-the linear coefficients, and one target row (-b_1 mod n, ..., -b_m mod n, K)
-with embedding weight K = 2^(u-1). Reducing this (m+2) x (m+1) integer matrix
-with LLL followed by BKZ (block size 30) surfaces a short vector whose last
-coordinate is +-K; its first m coordinates, corrected for sign, are exactly
-the e_i error terms. From any single recovered e_i the private key follows
-directly: d = a_i^-1 * ((-b_i mod n) - e_i) mod n. The candidate is confirmed by
-recomputing d*G and checking it equals the disclosed public key.
+metadata:
+  category: security
+  subcategory: cryptanalysis
+  model_tested: GPT-5.4
+  agent_tested: Terminus-2
+  task_objective: 
+    - analyze
+    - recover_or_repair_artifact
+  artifact_type: 
+    - security_artifact
+  expert_time_estimate_hours: 5
+  difficulty_explanation: |
+    The task cannot be solved by any of the standard nonce-reuse attacks: every
+    nonce is distinct and the per-signature bias is only 5 of 256 bits, far too
+    little to brute-force or spot algebraically from a pair of signatures. The
+    only route in is recognizing that a biased ECDSA nonce turns the signing
+    equation into an instance of the Hidden Number Problem (HNP), then building
+    a lattice in which the private key is embedded as an unusually short vector
+    and pulling it out with LLL/BKZ lattice reduction. That requires: deriving
+    the correct linear HNP relation from the ECDSA equation (getting a sign or
+    modular-inverse convention wrong silently produces a useless lattice),
+    choosing a working embedding (Kannan/CVP-style) and target-vector scaling
+    so the true key is actually the shortest vector rather than lost in the
+    lattice's typical-vector noise, and picking a signature count and reduction
+    strength that make recovery reliable rather than a coin flip. At only 5
+    leaked bits per signature (275 bits of total information for a 256-bit key)
+    the lattice gap is tighter than classic textbook examples; plain LLL fails,
+    and BKZ with a small block size (e.g. 20) is unreliable — the solver must
+    escalate to block sizes around 30, which is a non-trivial parameter-tuning
+    decision that requires understanding of lattice-reduction tradeoffs.
+    This is the same reduction real cryptanalysts use to break hardware wallets,
+    TPMs, and smart cards with biased or partially-leaked nonces (e.g. the
+    Minerva and related ECDSA side-channel disclosures), and it is the kind of
+    work done by applied cryptanalysis teams at firms like NCC Group or Trail of
+    Bits, or in academic attack labs, when auditing a signing implementation.
+    The signature data is synthetically generated from a real secp256k1 keypair
+    with a deliberately biased nonce generator; synthetic generation is
+    appropriate here because what must be realistic is the bias structure
+    itself (the exact leak model an implementation bug would produce), not
+    organic noise, and no public dataset of real leaked-nonce signatures exists
+    at the fidelity this task needs.
+  solution_explanation: |
+    For signature i, the ECDSA relation s_i = k_i^-1 (h_i + r_i d) mod n can be
+    solved for the nonce: k_i = s_i^-1 h_i + s_i^-1 r_i d mod n. Writing the
+    known high bits as msb_i and the bit-length of the unknown low part as
+    u = nonce_bitlength - leaked_bits, k_i = msb_i * 2^u + 2^(u-1) + e_i with
+    |e_i| <= 2^(u-1) centered. Substituting and rearranging gives
+    a_i d + b_i = e_i (mod n), with a_i = s_i^-1 r_i mod n and
+    b_i = s_i^-1 h_i - msb_i * 2^u - 2^(u-1) mod n -- a classic Hidden Number Problem: d
+    is the hidden number, and each equation states that a_i d + b_i mod n is
+    small.
+    
+    This is solved as a closest-vector problem via Kannan's embedding. Build a
+    lattice from m = 55 signature equations: m basis rows n*e_i (i = 1..m,
+    enforcing the mod-n reduction freedom), one row (a_1, ..., a_m, 0) encoding
+    the linear coefficients, and one target row (-b_1 mod n, ..., -b_m mod n, K)
+    with embedding weight K = 2^(u-1). Reducing this (m+2) x (m+1) integer matrix
+    with LLL followed by BKZ (block size 30) surfaces a short vector whose last
+    coordinate is +-K; its first m coordinates, corrected for sign, are exactly
+    the e_i error terms. From any single recovered e_i the private key follows
+    directly: d = a_i^-1 * ((-b_i mod n) - e_i) mod n. The candidate is confirmed by
+    recomputing d*G and checking it equals the disclosed public key.
+    
+    Plain LLL alone is not reliable at this 5-bit bias level, and BKZ with small
+    block sizes (e.g. 20) is unreliable at only 5 leaked bits — a block size
+    of at least 30 is needed for the short vector to reliably surface. fpylll
+    (an off-the-shelf lattice library) does the reduction; the work is in
+    deriving a_i/b_i correctly, constructing the embedding with correctly
+    scaled entries, tuning the BKZ block size to the bias level, and
+    reconstructing d from the reduced basis output.
+  verification_explanation: |
+    The verifier reads only the file the instruction names, /app/private_key.txt,
+    which the agent must produce. Three checks: (1) the file parses as a
+    hex-encoded integer in the valid private-key range (0, n); (2) it exactly
+    equals the ground-truth private key that generated the dataset, stored in
+    tests/ground_truth.json and never exposed to the agent; (3) the recovered
+    key is scalar-multiplied by the secp256k1 base point and the result is
+    compared exactly against the public key from ground_truth.json. All checks
+    are exact-match — ECDSA private key recovery has no partially-correct
+    answer, a key that is off by even one bit is cryptographically useless, so
+    no tolerance band is needed or appropriate.
 
-Plain LLL alone is not reliable at this 5-bit bias level, and BKZ with small
-block sizes (e.g. 20) is unreliable at only 5 leaked bits — a block size
-of at least 30 is needed for the short vector to reliably surface. fpylll
-(an off-the-shelf lattice library) does the reduction; the work is in
-deriving a_i/b_i correctly, constructing the embedding with correctly
-scaled entries, tuning the BKZ block size to the bias level, and
-reconstructing d from the reduced basis output.
-"""
-verification_explanation = """
-The verifier reads only the file the instruction names, /app/private_key.txt,
-which the agent must produce. Three checks: (1) the file parses as a
-hex-encoded integer in the valid private-key range (0, n); (2) it exactly
-equals the ground-truth private key that generated the dataset, stored in
-tests/ground_truth.json and never exposed to the agent; (3) the recovered
-key is scalar-multiplied by the secp256k1 base point and the result is
-compared exactly against the public key from ground_truth.json. All checks
-are exact-match — ECDSA private key recovery has no partially-correct
-answer, a key that is off by even one bit is cryptographically useless, so
-no tolerance band is needed or appropriate.
-"""
+environment:
+  network: disabled
+  cpus: 2
+  memory_mb: 2048
+  storage_mb: 10240
 
-[verifier]
-timeout_sec = 180.0
-
-[agent]
-timeout_sec = 3600.0
-
-[environment]
-build_timeout_sec = 600.0
-cpus = 2
-memory_mb = 2048
-storage_mb = 10240
-gpus = 0
-allow_internet = true
-mcp_servers = []
+limits:
+  max_steps: 500
+  timeout_seconds: 1200
