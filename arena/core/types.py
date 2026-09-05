@@ -9,6 +9,8 @@ class ActionType(Enum):
     TOOL_CALL = "TOOL_CALL"
     MESSAGE = "MESSAGE"
     STOP = "STOP"
+    SUBMIT = "SUBMIT"
+
 
 class AgentRole(Enum):
     EXPLORER = "EXPLORER"

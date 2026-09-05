@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional
 
 from arena.agents.base import BaseAgent
 from arena.core.protocols import LLMProvider, Memory, Tool
-from arena.core.types import AgentRole
+from arena.core.types import ActionType, AgentRole
+
 
 
 class LLMAgent(BaseAgent):
@@ -199,8 +200,10 @@ Rules:
         if not isinstance(arguments, dict):
             return None
 
+        action_type = ActionType.SUBMIT.value if name == "submit" else ActionType.TOOL_CALL.value
+
         return {
-            "type": "tool_call",
+            "type": action_type,
             "tool": name,
             "arguments": arguments,
         }
@@ -241,8 +244,10 @@ Rules:
         if not isinstance(arguments, dict):
             return None
 
+        action_type = ActionType.SUBMIT.value if name == "submit" else ActionType.TOOL_CALL.value
+
         return {
-            "type": "tool_call",
+            "type": action_type,
             "tool": name,
             "arguments": arguments,
         }
@@ -272,10 +277,12 @@ Rules:
         self,
         action: Dict[str, Any],
     ) -> Optional[str]:
+        action_type = action.get("type")
         tool_name = action.get("tool")
+        arguments = action.get("arguments", {})
 
-        if tool_name == "submit":
-            reason = action.get("arguments", {}).get("reason")
+        if action_type == ActionType.SUBMIT.value or tool_name == "submit":
+            reason = arguments.get("reason")
 
             if not isinstance(reason, str) or not reason.strip():
                 return "Submit requires a non-empty reason."
@@ -285,18 +292,24 @@ Rules:
         if tool_name not in self.tools:
             return f"Unknown tool: {tool_name!r}"
 
-        arguments = action.get("arguments")
-
         if not isinstance(arguments, dict):
             return "Tool arguments must be a JSON object."
 
-        if tool_name == "terminal":
-            command = arguments.get("command")
-
-            if not isinstance(command, str) or not command.strip():
-                return "Terminal requires a non-empty 'command'."
+        tool = self.tools[tool_name]
+        schema = getattr(tool, "input_schema", {})
+        if isinstance(schema, dict):
+            required_fields = schema.get("required", [])
+            for field in required_fields:
+                if field not in arguments:
+                    return f"Tool {tool_name!r} missing required argument: {field!r}."
+                val = arguments[field]
+                prop_info = schema.get("properties", {}).get(field, {})
+                expected_type = prop_info.get("type")
+                if expected_type == "string" and (not isinstance(val, str) or not val.strip()):
+                    return f"Tool {tool_name!r} requires a non-empty string for '{field}'."
 
         return None
+
 
     def _is_exact_duplicate(
         self,

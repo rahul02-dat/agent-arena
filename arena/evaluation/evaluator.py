@@ -1,54 +1,79 @@
-import json
-from typing import Any, Dict
+import importlib.util
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+
 from arena.environments.base import BaseEnvironment
+from arena.core.protocols import Evaluator as EvaluatorProtocol
 
-class Evaluator:
-    def __init__(self, environment: BaseEnvironment):
+
+class BaseEvaluator(EvaluatorProtocol):
+    def __init__(self, environment: BaseEnvironment, task_dir: Optional[Path | str] = None):
         self.environment = environment
-        
-    def evaluate(self) -> Dict[str, Any]:
-        if hasattr(self.environment, "task_dir") and hasattr(self.environment, "copy_to_container"):
-            tests_path = self.environment.task_dir / "evaluator" / "tests"
-            if tests_path.exists():
-                self.environment.copy_to_container(str(tests_path), "/")
-                res = self.environment.execute("bash /tests/test.sh")
-            else:
-                res = {"exit_code": -1, "output": f"Tests not found at {tests_path}"}
-        else:
-            res = self.environment.execute("bash tests/test.sh")
+        self.task_dir = Path(task_dir) if task_dir else getattr(environment, "task_dir", None)
 
-        ctrf_res = self.environment.execute("cat /logs/verifier/ctrf.json")
-        success = False
-        score = 0.0
-        metrics = {}
-        failure_reason = None
-        
-        if ctrf_res.get("exit_code") == 0:
-            try:
-                ctrf_data = json.loads(ctrf_res.get("stdout", "{}"))
-                summary = ctrf_data.get("results", {}).get("summary", {})
-                passed = summary.get("passed", 0)
-                failed = summary.get("failed", 0)
-                total = passed + failed
-                
-                if total > 0:
-                    score = float(passed) / total
-                    success = (failed == 0)
-                
-                metrics = summary
-                
-                if failed > 0:
-                    failure_reason = "Some evaluation tests failed."
-                
-            except json.JSONDecodeError:
-                failure_reason = "Failed to parse CTRF evaluation output."
-        else:
-            failure_reason = "Evaluation CTRF report not found or could not be read."
+    def validate_submission(self) -> Tuple[bool, Optional[str]]:
+        """Environment-side submission validation. Can be overridden by task evaluators."""
+        return True, None
 
+    def evaluate(
+        self,
+        task: Any = None,
+        state: Any = None,
+        protected_data: Any = None,
+    ) -> Dict[str, Any]:
+        """Generic evaluation method. Subclasses should override with task-specific logic."""
         return {
-            "success": success,
-            "score": score,
-            "metrics": metrics,
-            "failure_reason": failure_reason,
-            "details": res.get("output", "")
+            "success": False,
+            "score": 0.0,
+            "metrics": {},
+            "failure_reason": "Default BaseEvaluator has no task-specific evaluation defined.",
         }
+
+
+def get_evaluator(
+    environment: BaseEnvironment,
+    task_dir: Optional[Path | str] = None,
+) -> BaseEvaluator:
+    """Factory to load task-specific evaluator if available, otherwise return BaseEvaluator."""
+    t_dir = Path(task_dir) if task_dir else getattr(environment, "task_dir", None)
+    if t_dir:
+        t_dir = Path(t_dir)
+        evaluator_py = t_dir / "evaluator" / "evaluator.py"
+        if evaluator_py.exists():
+            mod_name = f"tasks.{t_dir.name}.evaluator.evaluator"
+            try:
+                import sys
+                if mod_name in sys.modules:
+                    mod = sys.modules[mod_name]
+                else:
+                    spec = importlib.util.spec_from_file_location(mod_name, str(evaluator_py))
+                    if spec and spec.loader:
+                        mod = importlib.util.module_from_spec(spec)
+                        sys.modules[mod_name] = mod
+                        spec.loader.exec_module(mod)
+                    else:
+                        mod = None
+
+                if mod:
+                    eval_cls = getattr(mod, "TaskEvaluator", None)
+                    if not eval_cls:
+                        for attr_name in dir(mod):
+                            attr = getattr(mod, attr_name)
+                            if (
+                                isinstance(attr, type)
+                                and issubclass(attr, BaseEvaluator)
+                                and attr is not BaseEvaluator
+                            ):
+                                eval_cls = attr
+                                break
+                    if eval_cls:
+                        return eval_cls(environment=environment, task_dir=t_dir)
+            except Exception:
+                pass
+
+
+    return BaseEvaluator(environment=environment, task_dir=t_dir)
+
+
+# Backwards compatibility alias
+Evaluator = BaseEvaluator

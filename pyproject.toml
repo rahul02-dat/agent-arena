@@ -15,7 +15,8 @@ dependencies = [
     "typer",
     "docker",
     "gymnasium",
-    "pettingzoo"
+    "pettingzoo",
+    "pyyaml"
 ]
 requires-python = ">=3.12"
 
@@ -29,3 +30,7 @@ arena = "arena.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["arena"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

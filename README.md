@@ -27,12 +27,12 @@ pip install -e ".[dev]"
 After installing, you can run the primary CLI to execute a task environment:
 
 ```bash
-arena run <task_id>
+arena run --task <task_id>
 ```
 
 Example:
 ```bash
-arena run ecdsa_nonce_bias
+arena run --task ecdsa_nonce_bias_001
 ```
 
 ## Documentation

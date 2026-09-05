@@ -1,34 +1,27 @@
 from typing import Any, Dict
-from arena.tools.base import BaseTool
+from arena.tools.base import Tool
 from arena.environments.base import BaseEnvironment
 
-class TerminalTool(BaseTool):
+class TerminalTool(Tool):
+    name: str = "terminal"
+    description: str = "Executes shell commands inside the isolated task environment."
+    input_schema: Dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "command": {
+                "type": "string",
+                "description": "The shell command to execute."
+            }
+        },
+        "required": ["command"]
+    }
+
     def __init__(self, environment: BaseEnvironment):
         self.environment = environment
-        
-    @property
-    def name(self) -> str:
-        return "terminal"
-        
-    @property
-    def description(self) -> str:
-        return "Executes shell commands inside the isolated task environment."
-        
-    @property
-    def input_schema(self) -> Dict[str, Any]:
-        return {
-            "type": "object",
-            "properties": {
-                "command": {
-                    "type": "string",
-                    "description": "The shell command to execute."
-                }
-            },
-            "required": ["command"]
-        }
-        
-    def execute(self, **kwargs) -> Any:
+
+    def execute(self, **kwargs: Any) -> Any:
         command = kwargs.get("command")
         if not command:
             return {"error": "No command provided."}
-        return self.environment.execute(command)
+        timeout = kwargs.get("timeout")
+        return self.environment.execute(command, timeout=timeout)

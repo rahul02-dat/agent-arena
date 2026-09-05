@@ -13,3 +13,8 @@ results/*
 models/
 checkpoints/
 artifacts/
+
+# Benchmark ground truth and secret data
+**/ground_truth.json
+!**/ground_truth.json.example
+**/private_key.txt
