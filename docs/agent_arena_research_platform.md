@@ -71,6 +71,7 @@ flowchart TD
     Task["<b>TASK</b><br>Objective + Limits"]
     Orchestrator["<b>ORCHESTRATOR</b><br>Learned / Heuristic Policy"]
     subgraph Agents
+        direction TB
         Explorer["Explorer"]
         Researcher["Researcher"]
         Executor["Executor"]
