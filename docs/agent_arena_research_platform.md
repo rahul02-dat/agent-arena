@@ -66,29 +66,65 @@ Evaluate multidimensional agent reliability:
 
 ## 5. Conceptual Architecture
 
+```mermaid
+flowchart TD
+    Task["<b>TASK</b><br/>Objective + Limits"]
+    Orchestrator["<b>ORCHESTRATOR</b><br/>Learned / Heuristic Policy"]
+    
+    subgraph Team["Specialized Agent Team"]
+        Explorer["Explorer"]
+        Researcher["Researcher"]
+        Executor["Executor"]
+    end
+    
+    Memory[("Shared Memory")]
+    Critic["Critic"]
+    Verifier["Verifier"]
+    Environment["<b>Environment</b><br/>Linux / Docker<br/>Files · Network · Processes · Data"]
+    Evaluator["<b>Evaluator</b>"]
+    Reward(["Reward"])
+    RLPipeline["<b>RL Pipeline</b>"]
+
+    Task --> Orchestrator
+    Orchestrator --> Explorer
+    Orchestrator --> Researcher
+    Orchestrator --> Executor
+    
+    Explorer --> Memory
+    Researcher --> Memory
+    Executor --> Memory
+    
+    Memory --> Critic
+    Critic --> Verifier
+    Verifier --> Environment
+    Environment --> Evaluator
+    Evaluator --> Reward
+    Reward --> RLPipeline
+```
+
 ```text
                          ┌─────────────────────┐
-                         │       TASK          │
+                         │        TASK         │
                          │                     │
                          │ Objective + Limits  │
                          └──────────┬──────────┘
                                     │
                                     ▼
                          ┌─────────────────────┐
-                         │   ORCHESTRATOR      │
+                         │    ORCHESTRATOR     │
                          │                     │
                          │ Learned / Heuristic │
                          │ Policy              │
                          └──────────┬──────────┘
                                     │
-                  ┌─────────────────┼─────────────────┐
-                  │                 │                 │
-                  ▼                 ▼                 ▼
-             ┌─────────┐       ┌─────────┐       ┌─────────┐
-             │ Explorer│       │Researcher│      │ Executor│
-             └────┬────┘       └────┬────┘       └────┬────┘
-                  │                 │                 │
-                  └─────────────────┼─────────────────┘
+                ┌───────────────────┼───────────────────┐
+                │                   │                   │
+                ▼                   ▼                   ▼
+         ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+         │  Explorer   │     │ Researcher  │     │  Executor   │
+         └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+                │                   │                   │
+                └───────────────────┼───────────────────┘
                                     │
                               Shared Memory
                                     │
@@ -102,6 +138,24 @@ Evaluate multidimensional agent reliability:
                                     │
                                     ▼
                          ┌─────────────────────┐
+                         │    Environment      │
+                         │                     │
+                         │ Linux / Docker      │
+                         │ Files / Network     │
+                         │ Processes / Data    │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │      Evaluator      │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                                  Reward
+                                    │
+                                    ▼
+                               RL Pipeline
+```��─────┐
                          │    Environment      │
                          │                     │
                          │ Linux / Docker      │
