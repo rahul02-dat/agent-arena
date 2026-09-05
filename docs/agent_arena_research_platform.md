@@ -67,7 +67,7 @@ Evaluate multidimensional agent reliability:
 ## 5. Conceptual Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
     Task["<b>TASK</b><br>Objective + Limits"]
     Orchestrator["<b>ORCHESTRATOR</b><br>Learned / Heuristic Policy"]
     subgraph Agents
