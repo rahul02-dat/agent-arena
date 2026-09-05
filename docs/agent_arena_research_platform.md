@@ -68,32 +68,28 @@ Evaluate multidimensional agent reliability:
 
 ```mermaid
 flowchart TD
-    Task["<b>TASK</b><br/>Objective + Limits"]
-    Orchestrator["<b>ORCHESTRATOR</b><br/>Learned / Heuristic Policy"]
-    
-    subgraph
+    Task["<b>TASK</b><br>Objective + Limits"]
+    Orchestrator["<b>ORCHESTRATOR</b><br>Learned / Heuristic Policy"]
+    subgraph Agents
         Explorer["Explorer"]
         Researcher["Researcher"]
         Executor["Executor"]
     end
-    
     Memory[("Shared Memory")]
     Critic["Critic"]
     Verifier["Verifier"]
-    Environment["<b>Environment</b><br/>Linux / Docker<br/>Files · Network · Processes · Data"]
+    Environment["<b>Environment</b><br>Linux / Docker<br>Files · Network · Processes · Data"]
     Evaluator["<b>Evaluator</b>"]
     Reward(["Reward"])
     RLPipeline["<b>RL Pipeline</b>"]
-
+    
     Task --> Orchestrator
     Orchestrator --> Explorer
     Orchestrator --> Researcher
     Orchestrator --> Executor
-    
     Explorer --> Memory
     Researcher --> Memory
     Executor --> Memory
-    
     Memory --> Critic
     Critic --> Verifier
     Verifier --> Environment
