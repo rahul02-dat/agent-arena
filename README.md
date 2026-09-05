@@ -135,4 +135,5 @@ uv run pytest tests/integration -v
 
 ## Documentation
 
-For background on the research architecture and reinforcement learning roadmap, see [Agent Arena Research Platform.pdf](docs/Agent%20Arena%20Research%20Platform.pdf) in the `docs/` directory.
+For background on the research architecture and reinforcement learning roadmap, see the [Agent Arena Research Platform Specification](docs/agent_arena_research_platform.md) (or the [original PDF](docs/Agent%20Arena%20Research%20Platform.pdf)) in the `docs/` directory.
+
